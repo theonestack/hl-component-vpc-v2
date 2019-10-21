@@ -1,0 +1,58 @@
+max_availability_zones: 3
+subnet_multiplyer: 5
+
+vpc_cidr: 10.0.0.0/16
+subnet_mask: 24
+
+subnets:
+  public:
+    name: Public
+    type: public
+  compute:
+    name: Compute
+    type: private
+  persistence:
+    name: Persistence
+    type: private
+  cache:
+    name: Cache
+    type: private
+
+acl_rules:
+  -
+    acl: public
+    number: 100
+    from: 80
+    ips:
+      - public
+  -
+    acl: public
+    number: 150
+    from: 443
+    ips:
+      - public
+  -
+    acl: public
+    number: 200
+    from: 1024
+    to: 65535
+    ips:
+      - public
+  -
+    acl: private
+    number: 100
+    protocol: -1 
+    ips:
+      - public
+      
+dns_format: ${EnvironmentName}.${DnsDomain}
+
+enable_transit_vpc: true
+manage_ns_records: false
+
+endpoints:
+  - s3
+  
+ip_blocks:
+  public:
+    - 0.0.0.0/0

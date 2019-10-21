@@ -1,0 +1,30 @@
+test_metadata:
+  type: config
+  name: nacl
+  description: test nacl rules
+
+acl_rules:
+  -
+    acl: public
+    number: 100
+    from: 22
+    ips:
+      - vpn
+      - stack
+  -
+    acl: private
+    number: 100
+    from: 22
+    ips:
+      - stack
+      - peered
+      - unknown
+
+ip_blocks:
+  public:
+    - 0.0.0.0/0
+  vpn:
+    - 1.1.1.1/32
+  peered:
+    - 10.0.3.5/32
+    - 192.168.5.8/32
