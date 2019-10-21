@@ -2,7 +2,7 @@ require 'netaddr'
 
 CloudFormation do
   
-  vpc_tags, route_tables, subnet_refs = Array.new(3) { [] }
+  vpc_tags, route_tables = Array.new(2) { [] }
   
   vpc_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-vpc") })
   vpc_tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
@@ -14,7 +14,7 @@ CloudFormation do
   
   # VPC
   EC2_VPC(:VPC) {
-    CidrBlock FnSub("${NetworkPrefix}.#{static_bits.join('.')}/#{net.netmask.prefix_len}")
+    CidrBlock FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.netmask.prefix_len}")
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
@@ -91,18 +91,32 @@ CloudFormation do
     end
   end
   
-  Condition('CreateNatGatewayEIP', FnEquals(FnJoin('', Ref('NatGatewayEIPs')), ''))
-  
+  Condition('CreateNatGatewayEIP', FnEquals(FnJoin("", Ref('NatGatewayEIPs')), ""))
+    
   max_availability_zones.times do |az|
     
     get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
     matches = ((az+1)..max_availability_zones).to_a
     
+    Condition("CreateAvailabiltiyZone#{az}",
+      if matches.length == 1
+        FnEquals(Ref(:AvailabiltiyZones), max_availability_zones)
+      else
+        FnOr(matches.map { |i| FnEquals(Ref(:AvailabiltiyZones), i) })
+      end
+    )
+    
     Condition("CreateNatGateway#{az}",
       if matches.length == 1
-        FnEquals(Ref(:NatGateways), max_availability_zones)
+        FnAnd([
+          Condition("CreateAvailabiltiyZone#{az}"),
+          FnEquals(Ref(:NatGateways), max_availability_zones)
+        ])
       else
-        FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
+        FnAnd([
+          Condition("CreateAvailabiltiyZone#{az}"),
+          FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
+        ])
       end
     )
     
@@ -134,6 +148,7 @@ CloudFormation do
     }
     
     EC2_Route("RouteOutToInternet#{az}") {
+      Condition("CreateAvailabiltiyZone#{az}")
       RouteTableId Ref("RouteTablePrivate#{az}")
       DestinationCidrBlock '0.0.0.0/0'
       NatGatewayId FnIf("CreateNatGateway#{az}", 
@@ -144,6 +159,8 @@ CloudFormation do
   end
   
   # Subnets
+  subnet_groups = {}
+  
   subnets.each_with_index do |(subnet,cfg),index|
     
     subnet_grp_refs = []
@@ -159,8 +176,9 @@ CloudFormation do
       get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
 
       EC2_Subnet(subnet_name_az) {
+        Condition("CreateAvailabiltiyZone#{az}")
         VpcId Ref(:VPC)
-        CidrBlock FnSub("${NetworkPrefix}.#{subnet_cidr.join('.')}")
+        CidrBlock FnSub("${NetworkBits}.#{subnet_cidr.join('.')}")
         AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
         Tags [
           { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) },
@@ -168,28 +186,36 @@ CloudFormation do
         ].push(*vpc_tags).uniq! { |t| t[:Key] }
       }
       
-      subnet_refs.push(Ref(subnet_name_az))
       subnet_grp_refs.push(Ref(subnet_name_az))
       
       route_table = cfg['type'].downcase == 'public' ? 'RouteTablePublic' : "RouteTablePrivate#{az}"
       
-      EC2_SubnetRouteTableAssociation("RouteTableAssociation#{subnet_name_az}") { 
+      EC2_SubnetRouteTableAssociation("RouteTableAssociation#{subnet_name_az}") {
+        Condition("CreateAvailabiltiyZone#{az}")
         SubnetId Ref(subnet_name_az)
         RouteTableId Ref(route_table)
       }
       
       EC2_SubnetNetworkAclAssociation("ACLAssociation#{subnet_name_az}") {
+        Condition("CreateAvailabiltiyZone#{az}")
         SubnetId Ref(subnet_name_az)
         NetworkAclId Ref("NetworkAcl#{cfg['type'].capitalize}")
       }
       
     end
     
+    subnet_grp_condition = ''
+    max_availability_zones.times do |az|
+      subnet_grp_condition = FnIf("CreateAvailabiltiyZone#{az}", subnet_grp_refs[0..az], subnet_grp_condition)
+    end
+    
     Output("#{cfg['name']}Subnets") {
-      Value(FnJoin(',', subnet_grp_refs))
+      Value(FnJoin(',', subnet_grp_condition))
       Export FnSub("${EnvironmentName}-#{component_name}-#{cfg['name']}Subnets")
     }
-        
+    
+    subnet_groups[cfg['name']] = subnet_grp_condition
+
   end
   
   EC2_SecurityGroup(:VpcEndpointInterface) {
@@ -225,13 +251,13 @@ CloudFormation do
       }
       
     else
-      
-      EC2_VPCEndpoint("#{endpoint.capitalize}VpcEndpoint") {
+      vpce = endpoint.gsub(/[^0-9a-z ]/i, '')
+      EC2_VPCEndpoint("#{vpce.capitalize}VpcEndpoint") {
         VpcId Ref(:VPC)
         ServiceName FnSub("com.amazonaws.${AWS::Region}.#{endpoint}")
         VpcEndpointType "Interface"
         PrivateDnsEnabled true
-        SubnetIds subnet_refs
+        SubnetIds subnet_groups[endpoint_subnets]
         SecurityGroupIds [ Ref(:VpcEndpointInterface) ]
       }
       
@@ -305,6 +331,21 @@ CloudFormation do
       TrafficType (flowlogs.is_a?(Hash) && flowlogs.has_key?('traffic_type')) ? flowlogs['traffic_type'] : 'ALL'
     }
     
+  end
+  
+  unless manage_ns_records
+    Route53_HostedZone(:HostedZone) {
+      Name FnSub(dns_format)
+      HostedZoneConfig ({
+        Comment: FnSub("Hosted Zone for ${EnvironmentName}")
+      })
+      HostedZoneTags tags
+    }
+    
+    Output(:HostedZone) {
+      Value(Ref(:HostedZone))
+      Export FnSub("${EnvironmentName}-#{component_name}-hosted-zone")
+    }
   end
   
   Output(:VPCId) {

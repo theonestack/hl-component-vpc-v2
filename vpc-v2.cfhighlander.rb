@@ -7,16 +7,29 @@ CfhighlanderTemplate do
     ComponentParam 'EnvironmentName', 'dev', isGlobal: true
     ComponentParam 'EnvironmentType', 'development', allowedValues: ['development','production'], isGlobal: true
     
-    ComponentParam 'DnsDomain', isGlobal: true
+    ComponentParam 'DnsDomain', 
+      isGlobal: true,
+      description: 'the root zone used to create the route53 hosted zone'
     
     net = NetAddr::IPv4Net.parse(vpc_cidr)
-    ComponentParam 'NetworkPrefix', net.network.to_s.split('.').shift(net.netmask.prefix_len/8).join('.')
+    ComponentParam 'NetworkBits', net.network.to_s.split('.').shift(net.netmask.prefix_len/8).join('.'),
+      description: 'override vpc cidr network bits'
     
-    ComponentParam 'NatGateways', max_availability_zones, allowedValues: (1..max_availability_zones).to_a
-    ComponentParam 'NatGatewayEIPs', '', type: 'CommaDelimitedList'
+    ComponentParam 'AvailabiltiyZones', max_availability_zones, 
+      allowedValues: (1..max_availability_zones).to_a,
+      description: 'Set the Availabiltiy Zone count for the stack'
+      
+    ComponentParam 'NatGateways', max_availability_zones, 
+      allowedValues: (1..max_availability_zones).to_a,
+      description: 'NAT Gateway count. If larger than AvailabiltiyZones value, the smaller is used.'
+      
+    ComponentParam 'NatGatewayEIPs', "", 
+      type: 'CommaDelimitedList',
+      description: 'List of EIP Ids, must be the same length as NatGateways'
     
     if enable_transit_vpc
-      ComponentParam 'EnableTransitVPC', 'false', isGlobal: true
+      ComponentParam 'EnableTransitVPC', 'false', 
+        description: 'Allows conditional creation of the the transit vpc resources'
     end
     
   end

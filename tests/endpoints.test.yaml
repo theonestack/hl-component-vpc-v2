@@ -1,0 +1,11 @@
+test_metadata:
+  type: config
+  name: endpoints
+  description: test interface vpc endpoints
+
+endpoint_subnets: Compute
+endpoints:
+  - s3
+  - ec2
+  - ec2messages
+  - ec2.api
