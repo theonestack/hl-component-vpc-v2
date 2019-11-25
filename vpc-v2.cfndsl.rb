@@ -250,6 +250,11 @@ CloudFormation do
         RouteTableIds route_tables
       }
       
+      Output(:S3VPCEndpointId) {
+        Value(Ref("#{endpoint.capitalize}VpcEndpoint"))
+        Export FnSub("${EnvironmentName}-#{component_name}-S3VPCEndpointId")
+      }
+      
     else
       vpce = endpoint.gsub(/[^0-9a-z ]/i, '')
       EC2_VPCEndpoint("#{vpce.capitalize}VpcEndpoint") {
