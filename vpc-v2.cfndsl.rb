@@ -1,4 +1,4 @@
-require 'netaddr'
+require 'ipaddr'
 
 CloudFormation do
   
@@ -8,13 +8,13 @@ CloudFormation do
   vpc_tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
   vpc_tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
   vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] } if defined? tags
-  
-  net = NetAddr::IPv4Net.parse(vpc_cidr)
-  static_bits = net.network.to_s.split('.').drop(net.netmask.prefix_len/8)
+    
+  net = IPAddr.new(vpc_cidr)
+  static_bits = net.to_s().split('.').drop(net.prefix()/8)
   
   # VPC
   EC2_VPC(:VPC) {
-    CidrBlock FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.netmask.prefix_len}")
+    CidrBlock FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
@@ -160,15 +160,16 @@ CloudFormation do
   
   # Subnets
   subnet_groups = {}
+  shift = 32 - subnet_mask
   
   subnets.each_with_index do |(subnet,cfg),index|
     
     subnet_grp_refs = []
-    
+
     max_availability_zones.times do |az|
       multiplyer = az + index * subnet_multiplyer
       
-      subnet_cidr = net.nth_subnet(subnet_mask,multiplyer).to_s
+      subnet_cidr = [((net.to_i >> shift) + multiplyer) << shift].pack('N').unpack('CCCC').join('.')
       subnet_cidr = subnet_cidr.split('.').drop(static_bits.length)
 
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
@@ -178,7 +179,7 @@ CloudFormation do
       EC2_Subnet(subnet_name_az) {
         Condition("CreateAvailabiltiyZone#{az}")
         VpcId Ref(:VPC)
-        CidrBlock FnSub("${NetworkBits}.#{subnet_cidr.join('.')}")
+        CidrBlock FnSub("${NetworkBits}.#{subnet_cidr.join('.')}/#{subnet_mask}")
         AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
         Tags [
           { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) },
@@ -217,7 +218,7 @@ CloudFormation do
     subnet_groups[cfg['name']] = subnet_grp_condition
 
   end
-  
+
   EC2_SecurityGroup(:VpcEndpointInterface) {
     VpcId Ref(:VPC)
     GroupDescription FnSub("Access to Amazon service VPC Endpoints from within the ${EnvironmentName} VPC")

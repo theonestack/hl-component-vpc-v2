@@ -1,4 +1,4 @@
-require 'netaddr'
+require 'ipaddr'
 
 CfhighlanderTemplate do
   Name 'vpc-v2'
@@ -11,8 +11,8 @@ CfhighlanderTemplate do
       isGlobal: true,
       description: 'the root zone used to create the route53 hosted zone'
     
-    net = NetAddr::IPv4Net.parse(vpc_cidr)
-    ComponentParam 'NetworkBits', net.network.to_s.split('.').shift(net.netmask.prefix_len/8).join('.'),
+    net = IPAddr.new(vpc_cidr)
+    ComponentParam 'NetworkBits', net.to_s().split('.').shift(net.prefix()/8).join('.'),
       description: 'override vpc cidr network bits'
     
     ComponentParam 'AvailabiltiyZones', max_availability_zones, 
