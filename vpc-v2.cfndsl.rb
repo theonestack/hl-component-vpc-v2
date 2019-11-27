@@ -344,7 +344,7 @@ CloudFormation do
       HostedZoneConfig ({
         Comment: FnSub("Hosted Zone for ${EnvironmentName}")
       })
-      HostedZoneTags tags
+      HostedZoneTags [{Key: 'Name', Value: FnSub(dns_format) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
     
     Output(:HostedZone) {
