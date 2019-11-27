@@ -75,7 +75,7 @@ CloudFormation do
     
     cidrs.each_with_index do |cidr,index|
       rule_number = rule['number'] + index
-      direction = (rule.has_key?('egress') && rule['egress']) ? 'Inbound' : 'Outbound'
+      direction = (rule.has_key?('egress') && rule['egress']) ? 'Outbound' : 'Inbound'
       
       EC2_NetworkAclEntry("NaclRule#{direction}#{rule['acl'].capitalize}#{rule_number}") {
         NetworkAclId Ref("NetworkAcl#{rule['acl'].capitalize}")
