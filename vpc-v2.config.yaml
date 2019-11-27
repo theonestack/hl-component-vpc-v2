@@ -44,6 +44,13 @@ acl_rules:
     protocol: -1 
     ips:
       - public
+  -
+    acl: public
+    number: 100
+    egress: true
+    protocol: -1
+    ips:
+      - public
       
 dns_format: ${EnvironmentName}.${DnsDomain}
 
