@@ -32,12 +32,22 @@ CfhighlanderTemplate do
         description: 'Allows conditional creation of the the transit vpc resources'
     end
     
+    ComponentParam 'NatType', 'managed', 
+      allowedValues: ['managed','instances']
+      
+    ComponentParam 'NatAmi', '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs',
+      type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+      
+    ComponentParam 'NatInstanceType', 't3.micro'
+    
+    ComponentParam 'NatInstancesSpot', 'true', 
+      allowedValues: ['true','false']
+    
   end
   
   Component template: 'route53-zone@1.0.2', name: 'dnszone', render: Inline do
     parameter name: 'CreateZone', value: 'true'
     parameter name: 'RootDomainName', value: FnSub('${DnsDomain}.')
   end if manage_ns_records
-
 
 end

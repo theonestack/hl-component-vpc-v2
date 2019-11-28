@@ -140,6 +140,43 @@ dns_format: ${EnvironmentName}.${DnsDomain}
 dns_format: ${DnsDomain}
 ```
 
+### NAT
+
+NATs can be toggled between NAT Instances (EC2) and AWS managed NAT Gateways.
+Check out this [table](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-comparison.html) for comparison
+
+**Managed**
+
+- AWS managed NAT Gateway
+- Attaches EIP
+- Can be more expensive
+- Can't be shut down
+- Easier to manage
+- Guaranteed high network throughput
+- Recommended for production type environments
+    
+**Instances**
+
+- EC2 instance in an ASG per availabiltiy zone
+- Attaches a secondary ENI with a EIP
+- Creates an extra attack surface
+- Network through put limited by the instance type
+- Can be cheaper using small instance sizes and utilising the spot market
+- Can be shutdown saving on cost
+- Recommended for development type environments
+
+`NatType` - AllowedValues: [`managed`,`instances`]
+
+`NatGateways` select the amount of nat's to deploy for the environment, max is 1 per az and min is 1. If less than the max az count is selected, the default route is directed out through Nat in AZ 0
+
+`NatGatewayEIPs` comma separated list of EIP IDs `eip-111111111,eip-3333333`. There must be equal number of EIP's as `NatGateways`
+
+`NatAmi` - default is `/aws/service/ami-amazon-linux-latest/amzn2-ami-minimal-hvm-x86_64-ebs` [ **NatType** `instances` ]
+
+`NatInstanceType` - default is `t3.micro` [ **NatType** `instances` ]
+
+`NatInstancesSpot` - enable spot for the EC2 Nat Instances, defaults to `true` [ **NatType** `instances` ]
+
 ## Outputs/Exports
 
 | Name | Value | Exported |

@@ -12,12 +12,25 @@ CloudFormation do
   net = IPAddr.new(vpc_cidr)
   static_bits = net.to_s().split('.').drop(net.prefix()/8)
   
+  ###
   # VPC
+  ###
+  
   EC2_VPC(:VPC) {
     CidrBlock FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
+  }
+  
+  Output(:VPCId) {
+    Value(Ref(:VPC))
+    Export FnSub("${EnvironmentName}-#{component_name}-VPCId")
+  }
+  
+  Output(:VPCCidr) {
+    Value(FnGetAtt(:VPC, :CidrBlock))
+    Export FnSub("${EnvironmentName}-#{component_name}-VPCCidr")
   }
   
   EC2_DHCPOptions(:DHCPOptionSet) {
@@ -62,6 +75,10 @@ CloudFormation do
     GatewayId Ref(:InternetGateway)
   }
   
+  ###
+  # Network Access Control Lists
+  ###
+  
   acl_rules.each do |rule|
     cidrs = []
     
@@ -91,13 +108,68 @@ CloudFormation do
     end
   end
   
-  Condition('CreateNatGatewayEIP', FnEquals(FnJoin("", Ref('NatGatewayEIPs')), ""))
-    
+  ##
+  # NAT Resource and conditions
+  ##
+  
+  Condition(:CreateNatGatewayEIP, FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""))
+  Condition(:SpotEnabled, FnNot(FnEquals(Ref(:NatInstancesSpot), 'true')))
+  Condition(:ManagedNat, FnEquals(Ref(:NatType), 'managed'))
+  Condition(:NatInstance, FnEquals(Ref(:NatType), 'instances'))
+      
+  EC2_SecurityGroup(:NatInstanceSecurityGroup) { 
+    Condition(:NatInstance)
+    VpcId Ref(:VPC)
+    GroupDescription FnSub("${EnvironmentName} NAT Instances")
+    SecurityGroupIngress([
+      {
+        CidrIp: FnGetAtt(:VPC, :CidrBlock),
+        Description: "inbound all for ports from vpc cidr",
+        IpProtocol: -1,
+      }
+    ])
+    SecurityGroupEgress([
+      {
+        CidrIp: "0.0.0.0/0",
+        Description: "outbound all for ports",
+        IpProtocol: -1,
+      }
+    ])
+    Tags vpc_tags
+  }
+  
+  IAM_Role(:NatInstanceRole) {
+    AssumeRolePolicyDocument service_role_assume_policy('ec2')
+    Path '/'
+    Policies([
+      iam_policy_allow('eni-attach',
+        'ec2:AttachNetworkInterface',
+        '*'
+      ),
+      iam_policy_allow('session-manager',
+        %w(ssm:UpdateInstanceInformation
+          ssm:ListInstanceAssociations
+          ec2messages:GetMessages
+          ssmmessages:CreateControlChannel
+          ssmmessages:CreateDataChannel
+          ssmmessages:OpenControlChannel
+          ssmmessages:OpenDataChannel),
+        '*'
+      )
+    ])
+  }
+      
+  InstanceProfile(:NatInstanceProfile) {
+    Path '/'
+    Roles [Ref(:NatInstanceRole)]
+  }
+  
   max_availability_zones.times do |az|
     
     get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
     matches = ((az+1)..max_availability_zones).to_a
     
+    # Determins whether we create resources in a particular availability zone
     Condition("CreateAvailabiltiyZone#{az}",
       if matches.length == 1
         FnEquals(Ref(:AvailabiltiyZones), max_availability_zones)
@@ -106,22 +178,63 @@ CloudFormation do
       end
     )
     
-    Condition("CreateNatGateway#{az}",
+    # Determins whether we create a Manage Nat Gateway for this availability zone
+    Condition("CreateManagedNat#{az}",
       if matches.length == 1
         FnAnd([
           Condition("CreateAvailabiltiyZone#{az}"),
+          Condition(:ManagedNat),
           FnEquals(Ref(:NatGateways), max_availability_zones)
         ])
       else
         FnAnd([
           Condition("CreateAvailabiltiyZone#{az}"),
+          Condition(:ManagedNat),
           FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
         ])
       end
     )
     
+    # Determins whether we create a Nat EC2 Inatnce for this availability zone
+    Condition("CreateNatInstance#{az}",
+      if matches.length == 1
+        FnAnd([
+          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition(:NatInstance),
+          FnEquals(Ref(:NatGateways), max_availability_zones)
+        ])
+      else
+        FnAnd([
+          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition(:NatInstance),
+          FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
+        ])
+      end
+    )
+    
+    # Determins whether we create a default public route through the manage NAT Gateway for this availability zone 
+    Condition("CreateManagedNatRoute#{az}",
+      FnAnd([
+        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition(:ManagedNat)
+      ])
+    )
+    
+    # Determins whether we create a default public route through the NAT EC2 Instance for this availability zone 
+    Condition("CreateNatInstanceRoute#{az}",
+      FnAnd([
+        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition(:NatInstance)
+      ])
+    )
+    
+    # Determins whether we create a Elastic Public IP for this availability zone
+    # This works across both managed nat and nat instances
     Condition("CreateNatGatewayEIP#{az}", FnAnd([
-      Condition("CreateNatGateway#{az}"),
+      FnOr([
+        Condition("CreateNatInstance#{az}"),
+        Condition("CreateManagedNat#{az}")
+      ]),
       Condition('CreateNatGatewayEIP')
     ]))
         
@@ -138,27 +251,131 @@ CloudFormation do
       Domain 'vpc'
     }
     
+    ##
+    # Managed Nat Gateway
+    ##
+        
     EC2_NatGateway("NatGateway#{az}") {
-      Condition("CreateNatGateway#{az}")
-      AllocationId FnIf('CreateNatGatewayEIP', 
-        FnGetAtt("NatIPAddress#{az}", 'AllocationId'),
-        FnSelect(az, Ref('NatGatewayEIPs')))
+      Condition("CreateManagedNat#{az}")
+      AllocationId FnIf(:CreateNatGatewayEIP, 
+        FnGetAtt("NatIPAddress#{az}", :AllocationId),
+        FnSelect(az, Ref(:NatGatewayEIPs)))
       SubnetId Ref("SubnetPublic#{az}")
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-natgw-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
     
     EC2_Route("RouteOutToInternet#{az}") {
-      Condition("CreateAvailabiltiyZone#{az}")
+      Condition("CreateManagedNatRoute#{az}")
       RouteTableId Ref("RouteTablePrivate#{az}")
       DestinationCidrBlock '0.0.0.0/0'
-      NatGatewayId FnIf("CreateNatGateway#{az}", 
+      NatGatewayId FnIf("CreateManagedNat#{az}", 
         Ref("NatGateway#{az}"), 
-        Ref("NatGateway0"))
+        Ref("NatGateway0")) # defaults to nat 0 if no nat in that az
+    }
+    
+    ##
+    # Nat Gateway Instances
+    ##
+        
+    nat_tags = vpc_tags.map(&:clone)
+    nat_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) })
+    nat_tags = nat_tags.reverse.uniq { |h| h[:Key] }
+    
+    EC2_NetworkInterface("NetworkInterface#{az}") {
+      Condition("CreateNatInstance#{az}")
+      SubnetId Ref("SubnetPublic#{az}")
+      SourceDestCheck false
+      GroupSet [Ref(:NatInstanceSecurityGroup)]
+      Tags nat_tags
+    }
+    
+    EC2_EIPAssociation("EIPAssociation#{az}") {
+      Condition("CreateNatInstance#{az}")
+      AllocationId FnIf(:CreateNatGatewayEIP, 
+        FnGetAtt("NatIPAddress#{az}", :AllocationId),
+        FnSelect(az, Ref(:NatGatewayEIPs)))
+      NetworkInterfaceId Ref("NetworkInterface#{az}")
+    }
+
+    nat_userdata = <<~USERDATA
+      #!/bin/bash
+      INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+      aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
+      sysctl -w net.ipv4.ip_forward=1
+      iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+      GW=$(curl -s http://169.254.169.254/2014-11-05/meta-data/local-ipv4/ | cut -d '.' -f 1-3).1
+      route del -net 0.0.0.0 gw $GW netmask 0.0.0.0 dev eth0 metric 0
+      route add -net 0.0.0.0 gw $GW netmask 0.0.0.0 dev eth0 metric 10002
+      EOF
+      systemctl disable postfix
+    USERDATA
+
+    template_data = {
+      TagSpecifications: [
+        { ResourceType: 'instance', Tags: nat_tags },
+        { ResourceType: 'volume', Tags: nat_tags }
+      ],
+      ImageId: Ref(:NatAmi),
+      InstanceType: Ref(:NatInstanceType),
+      UserData: FnBase64(FnSub(nat_userdata)),
+      IamInstanceProfile: { Name: Ref(:NatInstanceProfile) },
+      NetworkInterfaces: [{
+        DeviceIndex: 0,
+        AssociatePublicIpAddress: true,
+        Groups: [ Ref(:NatInstanceSecurityGroup) ]
+      }]
+    }
+    
+    spot_options = {
+      MarketType: 'spot',
+      SpotOptions: {
+        SpotInstanceType: 'one-time',
+      }
+    }
+    template_data[:InstanceMarketOptions] = FnIf(:SpotEnabled, spot_options, Ref('AWS::NoValue'))
+
+    EC2_LaunchTemplate("LaunchTemplate#{az}") {
+      Condition("CreateNatInstance#{az}")
+      LaunchTemplateData(template_data)
+    }
+    
+    asg_tags = nat_tags.map(&:clone)
+    
+    AutoScaling_AutoScalingGroup("AutoScaleGroup#{az}") {
+      Condition("CreateNatInstance#{az}")
+      UpdatePolicy(:AutoScalingRollingUpdate, {
+        MaxBatchSize: '1',
+        MinInstancesInService: 0,
+        SuspendProcesses: %w(HealthCheck ReplaceUnhealthy AZRebalance AlarmNotification ScheduledActions)
+      })  
+      UpdatePolicy(:AutoScalingScheduledAction, {
+        IgnoreUnmodifiedGroupSizeProperties: true
+      })
+      DesiredCapacity '1'
+      MinSize '1'
+      MaxSize '1'
+      VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
+      LaunchTemplate({
+        LaunchTemplateId: Ref("LaunchTemplate#{az}"),
+        Version: FnGetAtt("LaunchTemplate#{az}", :LatestVersionNumber)
+      })
+      Tags asg_tags.each {|h| h[:PropagateAtLaunch]=false}
+    }
+    
+    EC2_Route("RouteOutToInternet#{az}ViaNatInstance") {
+      Condition("CreateNatInstanceRoute#{az}")
+      RouteTableId Ref("RouteTablePrivate#{az}")
+      DestinationCidrBlock '0.0.0.0/0'
+      NetworkInterfaceId FnIf("CreateNatInstance#{az}",
+        Ref("NetworkInterface#{az}"),
+        Ref("NetworkInterface0")) # defaults to nat 0 if no nat in that az
     }
     
   end
   
+  ##
   # Subnets
+  ##
   subnet_groups = {}
   shift = 32 - subnet_mask
   
@@ -219,6 +436,10 @@ CloudFormation do
 
   end
 
+  ##
+  # VPC Endpoints
+  ##
+
   EC2_SecurityGroup(:VpcEndpointInterface) {
     VpcId Ref(:VPC)
     GroupDescription FnSub("Access to Amazon service VPC Endpoints from within the ${EnvironmentName} VPC")
@@ -270,6 +491,10 @@ CloudFormation do
     end
   end
   
+  ##
+  # Transit VPC
+  ##
+  
   if enable_transit_vpc
     Condition('DoEnableTransitVPC', FnEquals(Ref('EnableTransitVPC'),'true'))
     
@@ -297,6 +522,10 @@ CloudFormation do
       VpnGatewayId Ref(:VGW)
     }
   end
+  
+  ##
+  # VPC Flow logs
+  ##
   
   if defined?(flowlogs)
     log_retention = (flowlogs.is_a?(Hash) && flowlogs.has_key?('log_retention')) ? flowlogs['log_retention'] : 7
@@ -339,6 +568,10 @@ CloudFormation do
     
   end
   
+  ##
+  # Route 53
+  ##
+  
   unless manage_ns_records
     Route53_HostedZone(:HostedZone) {
       Name FnSub(dns_format)
@@ -353,15 +586,5 @@ CloudFormation do
       Export FnSub("${EnvironmentName}-#{component_name}-hosted-zone")
     }
   end
-  
-  Output(:VPCId) {
-    Value(Ref(:VPC))
-    Export FnSub("${EnvironmentName}-#{component_name}-VPCId")
-  }
-  
-  Output(:VPCCidr) {
-    Value(FnGetAtt(:VPC, :CidrBlock))
-    Export FnSub("${EnvironmentName}-#{component_name}-VPCCidr")
-  }
-  
+    
 end
