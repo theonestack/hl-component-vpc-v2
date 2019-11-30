@@ -139,6 +139,7 @@ CloudFormation do
   }
   
   IAM_Role(:NatInstanceRole) {
+    Condition(:NatInstance)
     AssumeRolePolicyDocument service_role_assume_policy('ec2')
     Path '/'
     Policies([
@@ -160,6 +161,7 @@ CloudFormation do
   }
       
   InstanceProfile(:NatInstanceProfile) {
+    Condition(:NatInstance)
     Path '/'
     Roles [Ref(:NatInstanceRole)]
   }
