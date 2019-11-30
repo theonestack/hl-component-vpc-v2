@@ -66,8 +66,6 @@ enable_transit_vpc: true
 manage_ns_records: false
 
 endpoint_subnets: Compute
-endpoints:
-  - s3
 
 ip_blocks:
   public:

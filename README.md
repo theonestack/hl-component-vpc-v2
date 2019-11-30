@@ -107,19 +107,24 @@ ip_blocks:
     1.1.1.1/32
 ```
 
-### VPC Endpoints
+### VPC Gateway Endpoints
 
-list of aws service endpoint. 
-default is s3.
+A S3 VPC Gateway Endpoint is always created and added to all route tables. 
+
+### VPC Interface Endpoints
+
+List of aws service interface endpoints to enable access over the private network.
+See [here](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints.html) for more info on available endpoints.
+**Note:** each vpce is [priced](https://aws.amazon.com/privatelink/pricing/) per interface per az plus data throughput.
 
 ```yaml
 endpoints:
-  - s3
   - ec2
   - ec2.api
 ```
 
-override the default vpce interface subnets
+
+Override the default vpce interface subnets
 
 ```yaml
 endpoint_subnets: Compute

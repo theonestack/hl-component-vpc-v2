@@ -440,44 +440,42 @@ CloudFormation do
   # VPC Endpoints
   ##
 
-  EC2_SecurityGroup(:VpcEndpointInterface) {
+  EC2_VPCEndpoint(:S3VpcEndpoint) {
     VpcId Ref(:VPC)
-    GroupDescription FnSub("Access to Amazon service VPC Endpoints from within the ${EnvironmentName} VPC")
-    SecurityGroupIngress([
-      {
-        CidrIp: FnGetAtt(:VPC, :CidrBlock),
-        Description: FnSub("HTTPS from ${EnvironmentName} VPC"),
-        IpProtocol: 'tcp',
-        FromPort: '443',
-        ToPort: '443'
-      }
-    ])
-  } 
+    PolicyDocument({
+      Version: "2012-10-17",
+      Statement: [{
+        Effect: "Allow",
+        Principal: "*",
+        Action: ["s3:*"],
+        Resource: ["arn:aws:s3:::*"]
+      }]
+    })
+    ServiceName FnSub("com.amazonaws.${AWS::Region}.s3")
+    RouteTableIds route_tables
+  }
   
-  endpoints.each do |endpoint|
-    if endpoint.downcase == 's3'
-      
-      EC2_VPCEndpoint("#{endpoint.capitalize}VpcEndpoint") {
-        VpcId Ref(:VPC)
-        PolicyDocument({
-          Version: "2012-10-17",
-          Statement: [{
-            Effect: "Allow",
-            Principal: "*",
-            Action: ["s3:*"],
-            Resource: ["arn:aws:s3:::*"]
-          }]
-        })
-        ServiceName FnSub("com.amazonaws.${AWS::Region}.s3")
-        RouteTableIds route_tables
-      }
-      
-      Output(:S3VPCEndpointId) {
-        Value(Ref("#{endpoint.capitalize}VpcEndpoint"))
-        Export FnSub("${EnvironmentName}-#{component_name}-S3VPCEndpointId")
-      }
-      
-    else
+  Output(:S3VPCEndpointId) {
+    Value(Ref(:S3VpcEndpoint))
+    Export FnSub("${EnvironmentName}-#{component_name}-S3VPCEndpointId")
+  }
+  
+  if (defined? endpoints) && (endpoints.any?)
+    EC2_SecurityGroup(:VpcEndpointInterface) {
+      VpcId Ref(:VPC)
+      GroupDescription FnSub("Access to Amazon service VPC Endpoints from within the ${EnvironmentName} VPC")
+      SecurityGroupIngress([
+        {
+          CidrIp: FnGetAtt(:VPC, :CidrBlock),
+          Description: FnSub("HTTPS from ${EnvironmentName} VPC"),
+          IpProtocol: 'tcp',
+          FromPort: '443',
+          ToPort: '443'
+        }
+      ])
+    }
+  
+    endpoints.each do |endpoint|
       vpce = endpoint.gsub(/[^0-9a-z ]/i, '')
       EC2_VPCEndpoint("#{vpce.capitalize}VpcEndpoint") {
         VpcId Ref(:VPC)
@@ -487,7 +485,6 @@ CloudFormation do
         SubnetIds subnet_groups[endpoint_subnets]
         SecurityGroupIds [ Ref(:VpcEndpointInterface) ]
       }
-      
     end
   end
   

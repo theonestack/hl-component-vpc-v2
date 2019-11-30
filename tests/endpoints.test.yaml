@@ -5,7 +5,8 @@ test_metadata:
 
 endpoint_subnets: Compute
 endpoints:
-  - s3
+  - ssm
+  - ssmmessages
   - ec2
   - ec2messages
   - ec2.api
