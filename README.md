@@ -170,7 +170,13 @@ Check out this [table](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-
 - Can be shutdown saving on cost
 - Recommended for development type environments
 
-`NatType` - AllowedValues: [`managed`,`instances`]
+**Disabled**
+
+- No resources associated with NAT Gateways are created
+- Recommended for when no public access is required
+- If you want to move between Managed NAT and Instances you must update to `disabled` first. This is due to EIP's already being attached to the current NAT ENI or Gateway.
+
+`NatType` - AllowedValues: [`managed`,`instances`,`disabled`]
 
 `NatGateways` select the amount of nat's to deploy for the environment, max is 1 per az and min is 1. If less than the max az count is selected, the default route is directed out through Nat in AZ 0
 
