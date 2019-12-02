@@ -17,8 +17,12 @@ kurgan add vpc-v2
 | DnsDomain | create route53 zone | | true | string
 | NetworkBits | override vpc cidr network bits | `vpc_cidr:` | false | string
 | AvailabiltiyZones | set the az count for the stack | `max_availability_zones:` | false | string
+| NatType | Select the NAT type | `managed` | false | string | [`managed`,`instances`,`disabled`]
 | NatGateways | NAT Gateway count. If larger than AvailabiltiyZones value, the smaller is used | `max_availability_zones:` | false | string
 | NatGatewayEIPs | List of EIP Ids, must be the same length as NatGateways' | | false | CommaDelimitedList
+| NatInstanceType | Ec2 instance type | `t3.micro` | false | string
+| NatAmi | Amazon Machine Image Id as a string or ssm parameter | `/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs` | false | SSM Parameter
+| NatInstancesSpot | Enable spot for the EC2 Nat Instances | `true` | false | String | ['true','false']
 | EnableTransitVPC | Allows conditional creation of the the transit vpc resources | 
 
 ## Configuration
@@ -150,6 +154,8 @@ dns_format: ${DnsDomain}
 NATs can be toggled between NAT Instances (EC2) and AWS managed NAT Gateways.
 Check out this [table](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-comparison.html) for comparison
 
+Select the amount of nat's to deploy for the environment, max is 1 per az and min is 1. If less than the max az count is selected, the default route is directed out through Nat in AZ 0
+
 **Managed**
 
 - AWS managed NAT Gateway
@@ -176,17 +182,11 @@ Check out this [table](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-
 - Recommended for when no public access is required
 - If you want to move between Managed NAT and Instances you must update to `disabled` first. This is due to EIP's already being attached to the current NAT ENI or Gateway.
 
-`NatType` - AllowedValues: [`managed`,`instances`,`disabled`]
-
-`NatGateways` select the amount of nat's to deploy for the environment, max is 1 per az and min is 1. If less than the max az count is selected, the default route is directed out through Nat in AZ 0
-
-`NatGatewayEIPs` comma separated list of EIP IDs `eip-111111111,eip-3333333`. There must be equal number of EIP's as `NatGateways`
-
-`NatAmi` - default is `/aws/service/ami-amazon-linux-latest/amzn2-ami-minimal-hvm-x86_64-ebs` [ **NatType** `instances` ]
-
-`NatInstanceType` - default is `t3.micro` [ **NatType** `instances` ]
-
-`NatInstancesSpot` - enable spot for the EC2 Nat Instances, defaults to `true` [ **NatType** `instances` ]
+**AMI Requirements**
+- linux
+- [awscli](https://github.com/aws/aws-cli)
+- iptables
+- route
 
 ## Outputs/Exports
 
