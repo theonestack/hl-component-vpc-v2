@@ -1,6 +1,6 @@
 test_metadata:
   type: config
-  name: default
+  name: manage_ns_records
   description: test the upstream route53 inline component
 
 manage_ns_records: true
