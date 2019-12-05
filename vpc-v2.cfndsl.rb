@@ -113,7 +113,7 @@ CloudFormation do
   ##
   
   Condition(:CreateNatGatewayEIP, FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""))
-  Condition(:SpotEnabled, FnNot(FnEquals(Ref(:NatInstancesSpot), 'true')))
+  Condition(:SpotEnabled, FnEquals(Ref(:NatInstancesSpot), 'true'))
   Condition(:ManagedNat, FnEquals(Ref(:NatType), 'managed'))
   Condition(:NatInstance, FnEquals(Ref(:NatType), 'instances'))
       
