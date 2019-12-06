@@ -70,4 +70,7 @@ endpoint_subnets: Compute
 ip_blocks:
   public:
     - 0.0.0.0/0
-  
+
+nat_iam_policies:
+  eni-attach:
+    action: ec2:AttachNetworkInterface

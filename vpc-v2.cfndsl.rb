@@ -140,24 +140,9 @@ CloudFormation do
   
   IAM_Role(:NatInstanceRole) {
     Condition(:NatInstance)
-    AssumeRolePolicyDocument service_role_assume_policy('ec2')
+    AssumeRolePolicyDocument service_assume_role_policy('ec2')
     Path '/'
-    Policies([
-      iam_policy_allow('eni-attach',
-        'ec2:AttachNetworkInterface',
-        '*'
-      ),
-      iam_policy_allow('session-manager',
-        %w(ssm:UpdateInstanceInformation
-          ssm:ListInstanceAssociations
-          ec2messages:GetMessages
-          ssmmessages:CreateControlChannel
-          ssmmessages:CreateDataChannel
-          ssmmessages:OpenControlChannel
-          ssmmessages:OpenDataChannel),
-        '*'
-      )
-    ])
+    Policies iam_role_policies(nat_iam_policies)
   }
       
   InstanceProfile(:NatInstanceProfile) {
