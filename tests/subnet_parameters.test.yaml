@@ -1,0 +1,9 @@
+test_metadata:
+  type: config
+  name: subnet_parameters
+  description: test the subnet paramters group
+
+subnet_parameters: true
+vpc_cidr: 192.168.1.0/23
+subnet_mask: 28
+subnet_multiplyer: 4
