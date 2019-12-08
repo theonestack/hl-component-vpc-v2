@@ -16,6 +16,8 @@ kurgan add vpc-v2
 | EnvironmentType | Tagging | development | true | string | ['development','production']
 | DnsDomain | create route53 zone | | true | string
 | NetworkBits | override vpc cidr network bits | `vpc_cidr:` | false | string
+| VPCCidr | override vpc cidr config | `vpc_cidr:` | false | CommaDelimitedList
+| GroupSubnets | list of subnet ciders for each subnet group |  | false | string
 | AvailabiltiyZones | set the az count for the stack | `max_availability_zones:` | false | string
 | NatType | Select the NAT type | `managed` | false | string | [`managed`,`instances`,`disabled`]
 | NatGateways | NAT Gateway count. If larger than AvailabiltiyZones value, the smaller is used | `max_availability_zones:` | false | string
@@ -28,6 +30,33 @@ kurgan add vpc-v2
 ## Configuration
 
 ### Subnetting
+
+There are 2 subnetting options defined by the `subnet_parameters` config option.
+
+```yaml
+subnet_parameters: false
+```
+
+**false** is the default. This option will calculate the subnet cidrs for each subnet and provides the ability over override the network bits at runtime via the `VPCCidr` parameter. This is the easiest of the 2 options but is limit to classful vpc cidrs `/16`, `/24`.
+
+For example, the vpc cidr `10.0.0.0/16` used to generate 3 `/24` subnets.
+The `NetworkBits` parameter default value is `10.0` with the 3 subnets cidr value set to 
+    ```ruby
+    FnSub("${NetworkBits}.0.0/24")
+    FnSub("${NetworkBits}.1.0/24")
+    FnSub("${NetworkBits}.2.0/24")
+    ```
+
+**true** allows for a more customisable networking template by calculating the subnet cidrs for each subnet and providing them as a list in a stack parameter for each subnet group. This option allows for more complex subnetting structures. this also allows for the entire `vpc_cidr` to be overridden at runtime.
+
+For example, the vpc cidr `192.168.0.0/24` used to generate 3 `/27` subnets.
+The `VPCCidr` parameter default value is `192.168.0.0/24` and generates the parameter `PublicSubnets` with a default value of `192.168.0.0/27,192.168.0.32/27,192.168.0.64/27`.
+
+Take a look at the AWS [documentation](https://docs.aws.amazon.com/vpc/latest/userguide/vpc-ip-addressing.html) on the VPC subnetting restrictions.
+
+The following subnet config bellow apply to both options
+
+**Subnet Groups**
 
 Default subnet groups that will be created in the VPC stack.
 ```yaml
@@ -46,11 +75,15 @@ subnets:
     type: private
 ```
 
+**Subnet Multiplyer**
+
 Determines how many subnets will allocated per subnet group.
 **Update** would require replacement of the whole VPC stack.
 ```yaml
-subnet_multiplyer: 5
+subnet_multiplyer: 4
 ```
+
+**Max Availability Zones**
 
 Determines the maximum amount of availability zones this stack can create.
 Cannot be a larger number than `subnet_multiplyer`.
@@ -60,24 +93,19 @@ Cannot be a larger number than `subnet_multiplyer`.
 max_availability_zones: 3
 ```
 
+**Subnet Mask**
+
 Determines the subnet size of the subnets
 ```yaml
 subnet_mask: 24
 ```
 
-The VPC CIDR for this component only supports classful networks [`/8`, `/16`,` /24`]
-The value is used to generate the subnet bits for each subnet, and then the network bits can be overridden as a parameter.
+**VPC Cidr**
+
+The value is used to generate the subnet bits for each subnet.
 ```yaml
 vpc_cidr: 10.0.0.0/16
 ```
-
-For example, the vpc cidr `10.0.0.0/16` used to generate 3 `/24` subnets.
-The `NetworkBits` parameter default value is `10.0` with the 3 subnets cidr value set to 
-    ```ruby
-    FnSub("${NetworkBits}.0.0/24")
-    FnSub("${NetworkBits}.1.0/24")
-    FnSub("${NetworkBits}.2.0/24")
-    ```
 
 ### NetworkACLs
 

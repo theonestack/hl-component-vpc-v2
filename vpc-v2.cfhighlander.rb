@@ -1,4 +1,5 @@
 require 'ipaddr'
+require './ext/cfndsl/subnets'
 
 CfhighlanderTemplate do
   Name 'vpc-v2'
@@ -14,8 +15,21 @@ CfhighlanderTemplate do
       description: 'the root zone used to create the route53 hosted zone'
     
     net = IPAddr.new(vpc_cidr)
-    ComponentParam 'NetworkBits', net.to_s().split('.').shift(net.prefix()/8).join('.'),
-      description: 'override vpc cidr network bits'
+    
+    if subnet_parameters
+      ComponentParam 'VPCCidr', vpc_cidr,
+        description: 'override the default vpc cidr in the config'
+        
+      subnets.each_with_index do |(subnet,cfg),index|
+        subnets = []
+        max_availability_zones.times {|az| subnets << calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask) }
+        ComponentParam "#{cfg['name']}Subnets", subnets.join(','), type: 'CommaDelimitedList'
+      end
+      
+    else
+      ComponentParam 'NetworkBits', net.to_s().split('.').shift(net.prefix()/8).join('.'),
+        description: 'override vpc cidr network bits'
+    end
     
     ComponentParam 'AvailabiltiyZones', max_availability_zones, 
       allowedValues: (1..max_availability_zones).to_a,

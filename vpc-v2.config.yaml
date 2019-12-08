@@ -1,8 +1,9 @@
 max_availability_zones: 3
-subnet_multiplyer: 5
+subnet_multiplyer: 4
 
 vpc_cidr: 10.0.0.0/16
 subnet_mask: 24
+subnet_parameters: false
 
 subnets:
   public:

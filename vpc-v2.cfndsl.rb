@@ -9,15 +9,28 @@ CloudFormation do
   vpc_tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
   vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] } if defined? tags
     
-  net = IPAddr.new(vpc_cidr)
-  static_bits = net.to_s().split('.').drop(net.prefix()/8)
-  
   ###
   # VPC
   ###
   
+  net = IPAddr.new(vpc_cidr)
+  static_bits = net.to_s().split('.').drop(net.prefix()/8)
+  vpc_mask = vpc_cidr.split('/').last.to_i
+  
+  if vpc_mask < 16 || vpc_mask > 28
+    raise ArgumentError, "The VPC CIDR block size must be from /16 to /28"
+  end
+  
+  if subnet_mask.to_i < vpc_mask
+    raise ArgumentError, "The Subnet CIDR block size must larger than the VPC CIDR block size"
+  end
+  
+  if subnet_mask.to_i < 16 || subnet_mask.to_i > 28
+    raise ArgumentError, "The Subnet CIDR block size must be from /16 to /28"
+  end
+  
   EC2_VPC(:VPC) {
-    CidrBlock FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
+    CidrBlock subnet_parameters ? vpc_cidr : FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
@@ -365,26 +378,26 @@ CloudFormation do
   # Subnets
   ##
   subnet_groups = {}
-  shift = 32 - subnet_mask
   
   subnets.each_with_index do |(subnet,cfg),index|
     
     subnet_grp_refs = []
 
     max_availability_zones.times do |az|
-      multiplyer = az + index * subnet_multiplyer
-      
-      subnet_cidr = [((net.to_i >> shift) + multiplyer) << shift].pack('N').unpack('CCCC').join('.')
-      subnet_cidr = subnet_cidr.split('.').drop(static_bits.length)
-
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
-      
       get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
+      
+      if subnet_parameters
+        subnet_cidr = FnSelect(az, Ref("#{cfg['name']}Subnets"))
+      else
+        subnet_cidr = calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask)
+        subnet_cidr = FnSub("${NetworkBits}.#{subnet_cidr.split('.').drop(static_bits.length).join('.')}")
+      end
 
       EC2_Subnet(subnet_name_az) {
         Condition("CreateAvailabiltiyZone#{az}")
         VpcId Ref(:VPC)
-        CidrBlock FnSub("${NetworkBits}.#{subnet_cidr.join('.')}/#{subnet_mask}")
+        CidrBlock subnet_cidr
         AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
         Tags [
           { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) },
