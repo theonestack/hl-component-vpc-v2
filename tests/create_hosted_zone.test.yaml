@@ -1,0 +1,6 @@
+test_metadata:
+  type: config
+  name: create_hosted_zone
+  description: set the create_hosted_zone config to false
+
+create_hosted_zone: false

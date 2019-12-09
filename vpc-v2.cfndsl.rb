@@ -570,7 +570,7 @@ CloudFormation do
   # Route 53
   ##
   
-  unless manage_ns_records
+  if !manage_ns_records && create_hosted_zone
     Route53_HostedZone(:HostedZone) {
       Name FnSub(dns_format)
       HostedZoneConfig ({
