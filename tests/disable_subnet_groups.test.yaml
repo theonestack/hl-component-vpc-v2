@@ -1,0 +1,16 @@
+test_metadata:
+  type: config
+  name: disable_subnet_groups
+  description: test disabling the persistence and cache subnet groups and creating a new custom subnet group
+
+subnets:
+  custom:
+    name: Custom
+    type: private
+    enable: true
+  compute:
+    enable: false
+  persistence:
+    enable: false
+  cache:
+    enable: false

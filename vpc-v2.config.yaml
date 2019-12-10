@@ -9,15 +9,19 @@ subnets:
   public:
     name: Public
     type: public
+    enable: true
   compute:
     name: Compute
     type: private
+    enable: true
   persistence:
     name: Persistence
     type: private
+    enable: true
   cache:
     name: Cache
     type: private
+    enable: true
 
 acl_rules:
   -

@@ -380,6 +380,7 @@ CloudFormation do
   subnet_groups = {}
   
   subnets.each_with_index do |(subnet,cfg),index|
+    next unless cfg['enable']
     
     subnet_grp_refs = []
 
