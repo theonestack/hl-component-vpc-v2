@@ -2,11 +2,10 @@ language: ruby
 rvm:
   - 2.5
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install python3
+  - pyenv global 3.7
 install:
   - gem install cfhighlander cfn-nag rspec
-  - pip3 install --user cfn-lint
+  - pip install --user cfn-lint
 before_script:
   - cfndsl -u
 script:
