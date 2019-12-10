@@ -30,7 +30,7 @@ CloudFormation do
   end
   
   EC2_VPC(:VPC) {
-    CidrBlock subnet_parameters ? vpc_cidr : FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
+    CidrBlock subnet_parameters ? Ref('CIDR') : FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
@@ -388,7 +388,7 @@ CloudFormation do
       get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
       
       if subnet_parameters
-        subnet_cidr = FnSelect(az, Ref("#{cfg['name']}Subnets"))
+        subnet_cidr = FnSelect(az, Ref("#{cfg['name']}SubnetList"))
       else
         subnet_cidr = calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask)
         subnet_cidr = FnSub("${NetworkBits}.#{subnet_cidr.split('.').drop(static_bits.length).join('.')}")

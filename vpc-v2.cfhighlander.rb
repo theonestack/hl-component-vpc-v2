@@ -1,5 +1,5 @@
 require 'ipaddr'
-require './ext/cfndsl/subnets'
+require "#{ENV['CF_COMPONENT_PATH']}/ext/cfndsl/subnets"
 
 CfhighlanderTemplate do
   Name 'vpc-v2'
@@ -17,13 +17,14 @@ CfhighlanderTemplate do
     net = IPAddr.new(vpc_cidr)
     
     if subnet_parameters
-      ComponentParam 'VPCCidr', vpc_cidr,
+      
+      ComponentParam 'CIDR', vpc_cidr,
         description: 'override the default vpc cidr in the config'
         
       subnets.each_with_index do |(subnet,cfg),index|
         subnets = []
         max_availability_zones.times {|az| subnets << calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask) }
-        ComponentParam "#{cfg['name']}Subnets", subnets.join(','), type: 'CommaDelimitedList'
+        ComponentParam "#{cfg['name']}SubnetList", subnets.join(','), type: 'CommaDelimitedList'
       end
       
     else
