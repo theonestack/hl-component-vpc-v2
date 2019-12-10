@@ -246,7 +246,6 @@ CloudFormation do
     route_tables.push(Ref("RouteTablePrivate#{az}"))
     
     EC2_EIP("NatIPAddress#{az}") {
-      Condition("CreateNatGatewayEIP#{az}")
       DependsOn ["AttachGateway"]
       Domain 'vpc'
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
