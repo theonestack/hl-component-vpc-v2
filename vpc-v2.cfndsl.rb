@@ -230,10 +230,8 @@ CloudFormation do
     # Determins whether we create a Elastic Public IP for this availability zone
     # This works across both managed nat and nat instances
     Condition("CreateNatGatewayEIP#{az}", FnAnd([
-      FnOr([
-        Condition("CreateNatInstance#{az}"),
-        Condition("CreateManagedNat#{az}")
-      ]),
+      Condition("CreateAvailabiltiyZone#{az}"),
+      FnEquals(Ref(:NatGateways), max_availability_zones),
       Condition('CreateNatGatewayEIP')
     ]))
         
@@ -245,6 +243,7 @@ CloudFormation do
     route_tables.push(Ref("RouteTablePrivate#{az}"))
     
     EC2_EIP("NatIPAddress#{az}") {
+      Condition "CreateNatGatewayEIP#{az}"
       DependsOn ["AttachGateway"]
       Domain 'vpc'
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
