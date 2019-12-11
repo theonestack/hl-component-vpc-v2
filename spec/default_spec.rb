@@ -16,7 +16,7 @@ describe 'compiled component' do
     let(:properties) { template["Resources"]["VPC"]["Properties"] }
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.0.0/16"})
+      expect(properties["CidrBlock"]).to eq({"Ref" => "CIDR"})
     end
 
     it 'has property EnableDnsSupport' do
@@ -953,7 +953,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.0.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [0, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1006,7 +1006,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.1.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [1, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1060,7 +1060,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.2.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [2, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1114,7 +1114,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.4.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [4, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1168,7 +1168,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.5.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [5, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1218,7 +1218,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.6.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [6, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1268,7 +1268,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.8.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [8, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1318,7 +1318,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.9.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [9, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1368,7 +1368,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.10.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [10, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1418,7 +1418,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.12.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [12, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1468,7 +1468,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.13.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [13, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1518,7 +1518,7 @@ describe 'compiled component' do
     end
 
     it 'has property CidrBlock' do
-      expect(properties["CidrBlock"]).to eq({"Fn::Sub"=>"${NetworkBits}.14.0/24"})
+      expect(properties["CidrBlock"]).to eq({"Fn::Select" => [14, {"Fn::Cidr"=>[{"Ref"=>"CIDR"}, 16, {"Ref"=>"SubnetBits"}]}]})
     end
 
     it 'has property AvailabilityZone' do
@@ -1657,12 +1657,12 @@ describe 'compiled component' do
       expect(parameters).to include('DnsDomain')
     end
     
-    it 'has parameter NetworkBits' do
-      expect(parameters).to include('NetworkBits')
+    it 'has parameter SubnetBits' do
+      expect(parameters).to include('SubnetBits')
     end
     
-    it 'NetworkBits has default value of' do
-      expect(template["Parameters"]["NetworkBits"]["Default"]).to eq('10.0')
+    it 'SubnetBits has default value of' do
+      expect(template["Parameters"]["SubnetBits"]["Default"]).to eq('8')
     end
     
     it 'has parameter AvailabiltiyZones' do

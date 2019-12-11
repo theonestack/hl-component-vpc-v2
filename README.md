@@ -15,8 +15,8 @@ kurgan add vpc-v2
 | EnvironmentName | Tagging | dev | true | string
 | EnvironmentType | Tagging | development | true | string | ['development','production']
 | DnsDomain | create route53 zone | | true | string
-| NetworkBits | override vpc cidr network bits | `vpc_cidr:` | false | string
-| VPCCidr | override vpc cidr config | `vpc_cidr:` | false | CommaDelimitedList
+| CIDR | override vpc cidr config | `vpc_cidr:` | false | CommaDelimitedList
+| SubnetBits | The number of subnet bits for the each subnet CIDR. For example, specifying a value "8" for this parameter will create a CIDR with a mask of "/24" | `32 - subnet_mask` | false | string
 | GroupSubnets | list of subnet ciders for each subnet group |  | false | string
 | AvailabiltiyZones | set the az count for the stack | `max_availability_zones:` | false | string
 | NatType | Select the NAT type | `managed` | false | string | [`managed`,`instances`,`disabled`]
@@ -31,23 +31,19 @@ kurgan add vpc-v2
 
 ### Subnetting
 
+**Subnet Allocation**
+
 There are 2 subnetting options defined by the `subnet_parameters` config option.
 
 ```yaml
 subnet_parameters: false
 ```
 
-**false** is the default. This option will calculate the subnet cidrs for each subnet and provides the ability over override the network bits at runtime via the `VPCCidr` parameter. This is the easiest of the 2 options but is limit to classful vpc cidrs `/16`, `/24`.
+- **false** 
+False is the default value set in the config. This option will calculate the subnet cidrs for each subnet using the CloudFormation `Fn::Cidr` function. The `CIDR` and `SubnetBits` parameters can be changed at runtime when creating the stack. The subnets are allocated in sequential order per subnet group with the `subnet_multiplyer` config option determining how many cidrs are allocated per group.
 
-For example, the vpc cidr `10.0.0.0/16` used to generate 3 `/24` subnets.
-The `NetworkBits` parameter default value is `10.0` with the 3 subnets cidr value set to 
-    ```ruby
-    FnSub("${NetworkBits}.0.0/24")
-    FnSub("${NetworkBits}.1.0/24")
-    FnSub("${NetworkBits}.2.0/24")
-    ```
-
-**true** allows for a more customisable networking template by calculating the subnet cidrs for each subnet and providing them as a list in a stack parameter for each subnet group. This option allows for more complex subnetting structures. this also allows for the entire `vpc_cidr` to be overridden at runtime.
+- **true** 
+True uses a local cidr calculation function which exposes the subnet cidrs as a `CommaDelimitedList` for each subnet group. Useful if you want full control over your subnet cidr allocation. The `SubnetBits` parameter is not available with this option as it has not effect on the subnetting.
 
 For example, the vpc cidr `192.168.0.0/24` used to generate 3 `/27` subnets.
 The `VPCCidr` parameter default value is `192.168.0.0/24` and generates the parameter `PublicSubnets` with a default value of `192.168.0.0/27,192.168.0.32/27,192.168.0.64/27`.
@@ -59,6 +55,7 @@ The following subnet config bellow apply to both options
 **Subnet Groups**
 
 Default subnet groups that will be created in the VPC stack.
+
 ```yaml
 subnets:
   public:
@@ -67,12 +64,31 @@ subnets:
   compute:
     name: Compute
     type: private
+    enable: true
   persistence:
     name: Persistence
     type: private
+    enable: true
   cache:
     name: Cache
     type: private
+    enable: true
+```
+
+each private default private group can be disabled with a cfhighlander project. The following example disables all the default private subnet groups and creates a new `MyCustom` subnet group. **Note** The public subnet group can't be disabled.
+
+```yaml
+subnets:
+  mycustom:
+    name: MyCustom
+    type: private
+    enable: true
+  compute:
+    enable: false
+  persistence:
+    enable: true
+  cache:
+    enable: true
 ```
 
 **Subnet Multiplyer**

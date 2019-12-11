@@ -14,7 +14,6 @@ CloudFormation do
   ###
   
   net = IPAddr.new(vpc_cidr)
-  static_bits = net.to_s().split('.').drop(net.prefix()/8)
   vpc_mask = vpc_cidr.split('/').last.to_i
   
   if vpc_mask < 16 || vpc_mask > 28
@@ -30,7 +29,7 @@ CloudFormation do
   end
   
   EC2_VPC(:VPC) {
-    CidrBlock subnet_parameters ? Ref('CIDR') : FnSub("${NetworkBits}.#{static_bits.join('.')}/#{net.prefix()}")
+    CidrBlock Ref('CIDR')
     EnableDnsSupport true
     EnableDnsHostnames true
     Tags vpc_tags
@@ -384,14 +383,14 @@ CloudFormation do
     subnet_grp_refs = []
 
     max_availability_zones.times do |az|
+      multiplyer = az+index*subnet_multiplyer
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
       get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
       
       if subnet_parameters
         subnet_cidr = FnSelect(az, Ref("#{cfg['name']}SubnetList"))
       else
-        subnet_cidr = calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask)
-        subnet_cidr = FnSub("${NetworkBits}.#{subnet_cidr.split('.').drop(static_bits.length).join('.')}")
+        subnet_cidr = FnSelect(multiplyer,FnCidr(Ref('CIDR'),(subnet_multiplyer*subnets.length),Ref('SubnetBits')))
       end
 
       EC2_Subnet(subnet_name_az) {

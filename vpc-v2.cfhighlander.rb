@@ -14,22 +14,23 @@ CfhighlanderTemplate do
       isGlobal: true,
       description: 'the root zone used to create the route53 hosted zone'
     
+    ComponentParam 'CIDR', vpc_cidr,
+      description: 'override the default vpc cidr in the config'
+    
     net = IPAddr.new(vpc_cidr)
     
     if subnet_parameters
-      
-      ComponentParam 'CIDR', vpc_cidr,
-        description: 'override the default vpc cidr in the config'
         
       subnets.each_with_index do |(subnet,cfg),index|
+        next unless cfg['enable']
         subnets = []
         max_availability_zones.times {|az| subnets << calculate_subnet((az+index*subnet_multiplyer),vpc_cidr,subnet_mask) }
         ComponentParam "#{cfg['name']}SubnetList", subnets.join(','), type: 'CommaDelimitedList'
       end
       
     else
-      ComponentParam 'NetworkBits', net.to_s().split('.').shift(net.prefix()/8).join('.'),
-        description: 'override vpc cidr network bits'
+      ComponentParam 'SubnetBits', (32 - subnet_mask).to_s,
+        description: 'The number of subnet bits for the each subnet CIDR. For example, specifying a value "8" for this parameter will create a CIDR with a mask of "/24"'
     end
     
     ComponentParam 'AvailabiltiyZones', max_availability_zones, 
