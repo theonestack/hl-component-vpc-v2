@@ -19,7 +19,7 @@ describe 'compiled component' do
     end
 
     it 'has property RetentionInDays' do
-      expect(properties["RetentionInDays"]).to eq("14")
+      expect(properties["RetentionInDays"]).to eq("7")
     end
 
   end
@@ -63,7 +63,7 @@ describe 'compiled component' do
     end
 
     it 'has property TrafficType' do
-      expect(properties["TrafficType"]).to eq("ACCEPT")
+      expect(properties["TrafficType"]).to eq("ALL")
     end
 
   end
