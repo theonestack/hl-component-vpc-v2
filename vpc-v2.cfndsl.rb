@@ -2,29 +2,32 @@ require 'ipaddr'
 
 CloudFormation do
   
+  tags = external_parameters.fetch(:tags, {})
+  
   vpc_tags, route_tables = Array.new(2) { [] }
   
   vpc_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-vpc") })
   vpc_tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
   vpc_tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
-  vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] } if defined? tags
+  vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] }
     
   ###
   # VPC
   ###
   
-  net = IPAddr.new(vpc_cidr)
-  vpc_mask = vpc_cidr.split('/').last.to_i
+  net = IPAddr.new(external_parameters[:vpc_cidr])
+  vpc_mask = external_parameters[:vpc_cidr].split('/').last.to_i
+  subnet_mask = external_parameters[:subnet_mask].to_i
   
   if vpc_mask < 16 || vpc_mask > 28
     raise ArgumentError, "The VPC CIDR block size must be from /16 to /28"
   end
   
-  if subnet_mask.to_i < vpc_mask
+  if subnet_mask < vpc_mask
     raise ArgumentError, "The Subnet CIDR block size must larger than the VPC CIDR block size"
   end
   
-  if subnet_mask.to_i < 16 || subnet_mask.to_i > 28
+  if subnet_mask < 16 || subnet_mask > 28
     raise ArgumentError, "The Subnet CIDR block size must be from /16 to /28"
   end
   
@@ -37,16 +40,16 @@ CloudFormation do
   
   Output(:VPCId) {
     Value(Ref(:VPC))
-    Export FnSub("${EnvironmentName}-#{component_name}-VPCId")
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-VPCId")
   }
   
   Output(:VPCCidr) {
     Value(FnGetAtt(:VPC, :CidrBlock))
-    Export FnSub("${EnvironmentName}-#{component_name}-VPCCidr")
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-VPCCidr")
   }
   
   EC2_DHCPOptions(:DHCPOptionSet) {
-    DomainName FnSub(dns_format)
+    DomainName FnSub(external_parameters[:dns_format])
     DomainNameServers ['AmazonProvidedDNS']
     Tags vpc_tags
   }
@@ -90,12 +93,12 @@ CloudFormation do
   ###
   # Network Access Control Lists
   ###
-  
-  acl_rules.each do |rule|
+    
+  external_parameters[:acl_rules].each do |rule|
     cidrs = []
     
     if rule.has_key?('ips')
-      cidrs.push(*rule['ips'].map {|ip| is_cidr?(ip) ? ip : ip_lookup(ip,ip_blocks) }.flatten(1))
+      cidrs.push(*rule['ips'].map {|ip| is_cidr?(ip) ? ip : ip_lookup(ip,external_parameters[:ip_blocks]) }.flatten(1))
     elsif rule.has_key?('cidr')
       cidrs.push(rule['cidr'])
     else
@@ -154,7 +157,7 @@ CloudFormation do
     Condition(:NatInstance)
     AssumeRolePolicyDocument service_assume_role_policy('ec2')
     Path '/'
-    Policies iam_role_policies(nat_iam_policies)
+    Policies iam_role_policies(external_parameters[:nat_iam_policies])
   }
       
   InstanceProfile(:NatInstanceProfile) {
@@ -163,15 +166,15 @@ CloudFormation do
     Roles [Ref(:NatInstanceRole)]
   }
   
-  max_availability_zones.times do |az|
+  external_parameters[:max_availability_zones].times do |az|
     
     get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
-    matches = ((az+1)..max_availability_zones).to_a
+    matches = ((az+1)..external_parameters[:max_availability_zones]).to_a
     
     # Determins whether we create resources in a particular availability zone
     Condition("CreateAvailabiltiyZone#{az}",
       if matches.length == 1
-        FnEquals(Ref(:AvailabiltiyZones), max_availability_zones)
+        FnEquals(Ref(:AvailabiltiyZones), external_parameters[:max_availability_zones])
       else
         FnOr(matches.map { |i| FnEquals(Ref(:AvailabiltiyZones), i) })
       end
@@ -183,7 +186,7 @@ CloudFormation do
         FnAnd([
           Condition("CreateAvailabiltiyZone#{az}"),
           Condition(:ManagedNat),
-          FnEquals(Ref(:NatGateways), max_availability_zones)
+          FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
         ])
       else
         FnAnd([
@@ -200,7 +203,7 @@ CloudFormation do
         FnAnd([
           Condition("CreateAvailabiltiyZone#{az}"),
           Condition(:NatInstance),
-          FnEquals(Ref(:NatGateways), max_availability_zones)
+          FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
         ])
       else
         FnAnd([
@@ -235,7 +238,7 @@ CloudFormation do
       FnAnd([
         Condition("CreateAvailabiltiyZone#{az}"),
         Condition('CreateNatGatewayEIP'),
-        FnEquals(Ref(:NatGateways), max_availability_zones)
+        FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
       ])
     else
       FnAnd([
@@ -387,20 +390,20 @@ CloudFormation do
   ##
   subnet_groups = {}
   
-  subnets.each_with_index do |(subnet,cfg),index|
+  external_parameters[:subnets].each_with_index do |(subnet,cfg),index|
     next unless cfg['enable']
     
     subnet_grp_refs = []
 
-    max_availability_zones.times do |az|
-      multiplyer = az+index*subnet_multiplyer
+    external_parameters[:max_availability_zones].times do |az|
+      multiplyer = az+index*external_parameters[:subnet_multiplyer]
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
       get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
       
-      if subnet_parameters
+      if external_parameters[:subnet_parameters]
         subnet_cidr = FnSelect(az, Ref("#{cfg['name']}SubnetList"))
       else
-        subnet_cidr = FnSelect(multiplyer,FnCidr(Ref('CIDR'),(subnet_multiplyer*subnets.length),Ref('SubnetBits')))
+        subnet_cidr = FnSelect(multiplyer,FnCidr(Ref('CIDR'),(external_parameters[:subnet_multiplyer]*external_parameters[:subnets].length),Ref('SubnetBits')))
       end
 
       EC2_Subnet(subnet_name_az) {
@@ -433,13 +436,13 @@ CloudFormation do
     end
     
     subnet_grp_condition = ''
-    max_availability_zones.times do |az|
+    external_parameters[:max_availability_zones].times do |az|
       subnet_grp_condition = FnIf("CreateAvailabiltiyZone#{az}", subnet_grp_refs[0..az], subnet_grp_condition)
     end
     
     Output("#{cfg['name']}Subnets") {
       Value(FnJoin(',', subnet_grp_condition))
-      Export FnSub("${EnvironmentName}-#{component_name}-#{cfg['name']}Subnets")
+      Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{cfg['name']}Subnets")
     }
     
     subnet_groups[cfg['name']] = subnet_grp_condition
@@ -467,10 +470,12 @@ CloudFormation do
   
   Output(:S3VPCEndpointId) {
     Value(Ref(:S3VpcEndpoint))
-    Export FnSub("${EnvironmentName}-#{component_name}-S3VPCEndpointId")
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-S3VPCEndpointId")
   }
   
-  if (defined? endpoints) && (endpoints.any?)
+  endpoints = external_parameters.fetch(:endpoints, [])
+  
+  if endpoints.any?
     EC2_SecurityGroup(:VpcEndpointInterface) {
       VpcId Ref(:VPC)
       GroupDescription FnSub("Access to Amazon service VPC Endpoints from within the ${EnvironmentName} VPC")
@@ -492,7 +497,7 @@ CloudFormation do
         ServiceName FnSub("com.amazonaws.${AWS::Region}.#{endpoint}")
         VpcEndpointType "Interface"
         PrivateDnsEnabled true
-        SubnetIds subnet_groups[endpoint_subnets]
+        SubnetIds subnet_groups[external_parameters[:endpoint_subnets]]
         SecurityGroupIds [ Ref(:VpcEndpointInterface) ]
       }
     end
@@ -502,7 +507,7 @@ CloudFormation do
   # Transit VPC
   ##
   
-  if enable_transit_vpc
+  if external_parameters[:enable_transit_vpc]
     Condition('DoEnableTransitVPC', FnEquals(Ref('EnableTransitVPC'),'true'))
     
     transit_vpc_tags = [
@@ -534,7 +539,9 @@ CloudFormation do
   # VPC Flow logs
   ##
   
-  if defined?(flowlogs)
+  flowlogs = external_parameters.fetch(:flowlogs, false)
+  
+  if flowlogs
     log_retention = (flowlogs.is_a?(Hash) && flowlogs.has_key?('log_retention')) ? flowlogs['log_retention'] : 7
 
     Logs_LogGroup(:FlowLogsLogGroup) {
@@ -579,18 +586,18 @@ CloudFormation do
   # Route 53
   ##
   
-  if !manage_ns_records && create_hosted_zone
+  if !external_parameters[:manage_ns_records] && external_parameters[:create_hosted_zone]
     Route53_HostedZone(:HostedZone) {
-      Name FnSub(dns_format)
+      Name FnSub(external_parameters[:dns_format])
       HostedZoneConfig ({
         Comment: FnSub("Hosted Zone for ${EnvironmentName}")
       })
-      HostedZoneTags [{Key: 'Name', Value: FnSub(dns_format) }].push(*vpc_tags).uniq! { |t| t[:Key] }
+      HostedZoneTags [{Key: 'Name', Value: FnSub(external_parameters[:dns_format]) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
     
     Output(:HostedZone) {
       Value(Ref(:HostedZone))
-      Export FnSub("${EnvironmentName}-#{component_name}-hosted-zone")
+      Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-hosted-zone")
     }
   end
     
