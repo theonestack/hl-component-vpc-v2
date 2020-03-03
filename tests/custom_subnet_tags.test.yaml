@@ -1,0 +1,26 @@
+test_metadata:
+  type: config
+  name: custom_subnet_tags
+  description: Add custom tags to subnets
+
+subnets:
+  public:
+    name: Public
+    type: public
+    enable: true
+    tags:
+      -
+        Key: TestKeyPublic
+        Value: TestValuePublic
+  compute:
+    name: Compute
+    type: private
+    enable: true
+  persistence:
+    name: Persistence
+    type: private
+    enable: true
+  cache:
+    name: Cache
+    type: private
+    enable: true
