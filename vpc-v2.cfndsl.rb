@@ -395,6 +395,11 @@ CloudFormation do
     
     subnet_grp_refs = []
 
+    subnet_tags = vpc_tags.map(&:clone)
+    if cfg.key?('tags')
+      subnet_tags.push(*cfg['tags']).uniq! { |t| t[:Key] }
+    end
+
     external_parameters[:max_availability_zones].times do |az|
       multiplyer = az+index*external_parameters[:subnet_multiplyer]
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
@@ -414,7 +419,7 @@ CloudFormation do
         Tags [
           { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) },
           { Key: 'Type', Value: cfg['type'] }
-        ].push(*vpc_tags).uniq! { |t| t[:Key] }
+        ].push(*subnet_tags).uniq! { |t| t[:Key] }
       }
       
       subnet_grp_refs.push(Ref(subnet_name_az))
