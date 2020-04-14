@@ -33,13 +33,14 @@ CfhighlanderTemplate do
         description: 'The number of subnet bits for the each subnet CIDR. For example, specifying a value "8" for this parameter will create a CIDR with a mask of "/24"'
     end
     
-    ComponentParam 'AvailabiltiyZones', max_availability_zones, 
+    ComponentParam 'AvailabilityZones', max_availability_zones, 
       allowedValues: (1..max_availability_zones).to_a,
-      description: 'Set the Availabiltiy Zone count for the stack'
+      description: 'Set the Availabiltiy Zone count for the stack',
+      isGlobal: true
       
     ComponentParam 'NatGateways', max_availability_zones, 
       allowedValues: (1..max_availability_zones).to_a,
-      description: 'NAT Gateway count. If larger than AvailabiltiyZones value, the smaller is used.'
+      description: 'NAT Gateway count. If larger than AvailabilityZones value, the smaller is used.'
       
     ComponentParam 'NatGatewayEIPs', "", 
       type: 'CommaDelimitedList',
