@@ -1665,12 +1665,12 @@ describe 'compiled component' do
       expect(template["Parameters"]["SubnetBits"]["Default"]).to eq('8')
     end
     
-    it 'has parameter AvailabiltiyZones' do
-      expect(parameters).to include('AvailabiltiyZones')
+    it 'has parameter AvailabilityZones' do
+      expect(parameters).to include('AvailabilityZones')
     end
     
-    it 'AvailabiltiyZones has allowed values of' do
-      expect(template["Parameters"]["AvailabiltiyZones"]["AllowedValues"]).to match_array([1,2,3])
+    it 'AvailabilityZones has allowed values of' do
+      expect(template["Parameters"]["AvailabilityZones"]["AllowedValues"]).to match_array([1,2,3])
     end
 
     it 'has parameter NatGateways' do
