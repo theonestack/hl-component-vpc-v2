@@ -49,7 +49,7 @@ describe 'compiled component' do
     end
 
     it 'has property SubnetIds' do
-      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabiltiyZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabiltiyZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabiltiyZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
+      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabilityZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabilityZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabilityZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
     end
 
     it 'has property SecurityGroupIds' do
@@ -79,7 +79,7 @@ describe 'compiled component' do
     end
 
     it 'has property SubnetIds' do
-      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabiltiyZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabiltiyZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabiltiyZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
+      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabilityZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabilityZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabilityZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
     end
 
     it 'has property SecurityGroupIds' do
@@ -109,7 +109,7 @@ describe 'compiled component' do
     end
 
     it 'has property SubnetIds' do
-      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabiltiyZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabiltiyZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabiltiyZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
+      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabilityZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabilityZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabilityZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
     end
 
     it 'has property SecurityGroupIds' do
@@ -139,7 +139,7 @@ describe 'compiled component' do
     end
 
     it 'has property SubnetIds' do
-      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabiltiyZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabiltiyZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabiltiyZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
+      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabilityZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabilityZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabilityZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
     end
 
     it 'has property SecurityGroupIds' do
@@ -169,7 +169,7 @@ describe 'compiled component' do
     end
 
     it 'has property SubnetIds' do
-      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabiltiyZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabiltiyZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabiltiyZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
+      expect(properties["SubnetIds"]).to eq({"Fn::If"=>["CreateAvailabilityZone2", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}, {"Ref"=>"SubnetCompute2"}], {"Fn::If"=>["CreateAvailabilityZone1", [{"Ref"=>"SubnetCompute0"}, {"Ref"=>"SubnetCompute1"}], {"Fn::If"=>["CreateAvailabilityZone0", [{"Ref"=>"SubnetCompute0"}], ""]}]}]})
     end
 
     it 'has property SecurityGroupIds' do

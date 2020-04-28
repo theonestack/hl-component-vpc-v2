@@ -172,11 +172,11 @@ CloudFormation do
     matches = ((az+1)..external_parameters[:max_availability_zones]).to_a
     
     # Determins whether we create resources in a particular availability zone
-    Condition("CreateAvailabiltiyZone#{az}",
+    Condition("CreateAvailabilityZone#{az}",
       if matches.length == 1
-        FnEquals(Ref(:AvailabiltiyZones), external_parameters[:max_availability_zones])
+        FnEquals(Ref(:AvailabilityZones), external_parameters[:max_availability_zones])
       else
-        FnOr(matches.map { |i| FnEquals(Ref(:AvailabiltiyZones), i) })
+        FnOr(matches.map { |i| FnEquals(Ref(:AvailabilityZones), i) })
       end
     )
     
@@ -184,13 +184,13 @@ CloudFormation do
     Condition("CreateManagedNat#{az}",
       if matches.length == 1
         FnAnd([
-          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition("CreateAvailabilityZone#{az}"),
           Condition(:ManagedNat),
           FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
         ])
       else
         FnAnd([
-          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition("CreateAvailabilityZone#{az}"),
           Condition(:ManagedNat),
           FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
         ])
@@ -201,13 +201,13 @@ CloudFormation do
     Condition("CreateNatInstance#{az}",
       if matches.length == 1
         FnAnd([
-          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition("CreateAvailabilityZone#{az}"),
           Condition(:NatInstance),
           FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
         ])
       else
         FnAnd([
-          Condition("CreateAvailabiltiyZone#{az}"),
+          Condition("CreateAvailabilityZone#{az}"),
           Condition(:NatInstance),
           FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
         ])
@@ -217,7 +217,7 @@ CloudFormation do
     # Determins whether we create a default public route through the manage NAT Gateway for this availability zone 
     Condition("CreateManagedNatRoute#{az}",
       FnAnd([
-        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition("CreateAvailabilityZone#{az}"),
         Condition(:ManagedNat)
       ])
     )
@@ -225,7 +225,7 @@ CloudFormation do
     # Determins whether we create a default public route through the NAT EC2 Instance for this availability zone 
     Condition("CreateNatInstanceRoute#{az}",
       FnAnd([
-        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition("CreateAvailabilityZone#{az}"),
         Condition(:NatInstance)
       ])
     )
@@ -236,13 +236,13 @@ CloudFormation do
     Condition("CreateNatGatewayEIP#{az}", 
     if matches.length == 1
       FnAnd([
-        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition("CreateAvailabilityZone#{az}"),
         Condition('CreateNatGatewayEIP'),
         FnEquals(Ref(:NatGateways), external_parameters[:max_availability_zones])
       ])
     else
       FnAnd([
-        Condition("CreateAvailabiltiyZone#{az}"),
+        Condition("CreateAvailabilityZone#{az}"),
         Condition('CreateNatGatewayEIP'),
         FnOr(matches.map { |i| FnEquals(Ref(:NatGateways), i) })
       ])
@@ -412,7 +412,7 @@ CloudFormation do
       end
 
       EC2_Subnet(subnet_name_az) {
-        Condition("CreateAvailabiltiyZone#{az}")
+        Condition("CreateAvailabilityZone#{az}")
         VpcId Ref(:VPC)
         CidrBlock subnet_cidr
         AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
@@ -427,13 +427,13 @@ CloudFormation do
       route_table = cfg['type'].downcase == 'public' ? 'RouteTablePublic' : "RouteTablePrivate#{az}"
       
       EC2_SubnetRouteTableAssociation("RouteTableAssociation#{subnet_name_az}") {
-        Condition("CreateAvailabiltiyZone#{az}")
+        Condition("CreateAvailabilityZone#{az}")
         SubnetId Ref(subnet_name_az)
         RouteTableId Ref(route_table)
       }
       
       EC2_SubnetNetworkAclAssociation("ACLAssociation#{subnet_name_az}") {
-        Condition("CreateAvailabiltiyZone#{az}")
+        Condition("CreateAvailabilityZone#{az}")
         SubnetId Ref(subnet_name_az)
         NetworkAclId Ref("NetworkAcl#{cfg['type'].capitalize}")
       }
@@ -442,7 +442,7 @@ CloudFormation do
     
     subnet_grp_condition = ''
     external_parameters[:max_availability_zones].times do |az|
-      subnet_grp_condition = FnIf("CreateAvailabiltiyZone#{az}", subnet_grp_refs[0..az], subnet_grp_condition)
+      subnet_grp_condition = FnIf("CreateAvailabilityZone#{az}", subnet_grp_refs[0..az], subnet_grp_condition)
     end
     
     Output("#{cfg['name']}Subnets") {
