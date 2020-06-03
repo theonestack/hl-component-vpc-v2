@@ -523,6 +523,9 @@ CloudFormation do
     VPNGateway(:VGW) {
       Condition('DoEnableTransitVPC')
       Type 'ipsec.1'
+      if external_parameters[:vgw_asn]
+        AmazonSideAsn external_parameters[:vgw_asn]
+      end
       Tags transit_vpc_tags.push(*vpc_tags).uniq! { |t| t[:Key] }
     }
 
