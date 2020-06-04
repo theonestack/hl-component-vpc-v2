@@ -493,6 +493,13 @@ CloudFormation do
           ToPort: '443'
         }
       ])
+      Metadata({
+        cfn_nag: {
+          rules_to_suppress: [
+            { id: 'F1000', reason: 'adding rules using cfn resources' }
+          ]
+        }
+      })
     }
   
     endpoints.each do |endpoint|

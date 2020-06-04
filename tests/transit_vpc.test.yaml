@@ -1,0 +1,7 @@
+test_metadata:
+  type: config
+  name: transit_vpc
+  description: test the transit vpc config
+  
+enable_transit_vpc: true
+vgw_asn: 64512

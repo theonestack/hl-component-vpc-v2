@@ -25,7 +25,7 @@ kurgan add vpc-v2
 | NatInstanceType | Ec2 instance type | `t3.micro` | false | string
 | NatAmi | Amazon Machine Image Id as a string or ssm parameter | `/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs` | false | SSM Parameter
 | NatInstancesSpot | Enable spot for the EC2 Nat Instances | `true` | false | String | ['true','false']
-| EnableTransitVPC | Allows conditional creation of the the transit vpc resources | 
+| EnableTransitVPC | Allows conditional creation of the the transit vpc resources | `true` | false | String | ['true','false']
 
 ## Configuration
 
@@ -231,6 +231,20 @@ Select the amount of nat's to deploy for the environment, max is 1 per az and mi
 - [awscli](https://github.com/aws/aws-cli)
 - iptables
 - route
+
+### Transit VPC
+
+To render the resources required in the template set the `enable_transit_vpc` config to `true`. The resources are conditional based upon the `EnableTransitVPC` runtime parameter, set the value to `true` to create the resources for the stack. 
+
+```yaml
+enable_transit_vpc: true
+```
+
+To set the Amazon side Asn for the VpnGateway set the following config with the desired value.
+
+```yaml
+vgw_asn: 64512
+```
 
 ## Outputs/Exports
 
