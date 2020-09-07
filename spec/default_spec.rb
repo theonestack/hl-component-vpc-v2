@@ -27,11 +27,12 @@ describe 'compiled component' do
       expect(properties["EnableDnsHostnames"]).to eq(true)
     end
 
+    let(:tags) { template["Resources"]["VGW"]["Properties"]["Tags"] }
+
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -49,10 +50,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -76,10 +76,9 @@ describe 'compiled component' do
     let(:properties) { template["Resources"]["InternetGateway"]["Properties"] }
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -107,10 +106,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-public"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-public"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -124,10 +122,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-public"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-public"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -141,10 +138,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-private"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-private"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -386,10 +382,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-vpc"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -435,10 +430,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -452,10 +446,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -473,10 +466,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -516,10 +508,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -573,10 +564,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}, "PropagateAtLaunch"=>false}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "PropagateAtLaunch"=>false, "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -608,10 +598,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -625,9 +614,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -645,10 +634,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -688,10 +676,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -745,10 +732,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}, "PropagateAtLaunch"=>false}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "PropagateAtLaunch"=>false, "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}, "PropagateAtLaunch"=>false})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -780,10 +766,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-private-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -797,10 +782,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -818,10 +802,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-natgw-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -861,10 +844,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -918,10 +900,9 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}, "PropagateAtLaunch"=>false}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}, "PropagateAtLaunch"=>false}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "PropagateAtLaunch"=>false, "Value"=>{"Fn::Sub"=>["${EnvironmentName}-nat-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}, "PropagateAtLaunch"=>false})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "PropagateAtLaunch"=>false, "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -961,10 +942,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Type", "Value"=>"public"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"public"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1014,11 +995,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Type", "Value"=>"public"}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"public"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1068,11 +1048,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}},
-        {"Key"=>"Type", "Value"=>"public"}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-public-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"public"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1122,11 +1101,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([
-        {"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, 
-        {"Key"=>"Type", "Value"=>"private"}, 
-        {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, 
-        {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1176,7 +1154,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1226,7 +1207,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-compute-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1276,7 +1260,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1326,7 +1313,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1376,7 +1366,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-persistence-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1426,7 +1419,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[0, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1476,7 +1472,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[1, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1526,7 +1525,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}}, {"Key"=>"Type", "Value"=>"private"}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>["${EnvironmentName}-cache-${AZ}", {"AZ"=>{"Fn::Select"=>[2, {"Fn::GetAZs"=>{"Ref"=>"AWS::Region"}}]}}]}})
+      expect(properties["Tags"]).to include({"Key"=>"Type", "Value"=>"private"})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1590,7 +1592,10 @@ describe 'compiled component' do
     end
 
     it 'has property Tags' do
-      expect(properties["Tags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-VGW"}}, {"Key"=>"transitvpc:spoke", "Value"=>{"Ref"=>"EnableTransitVPC"}}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+      expect(properties["Tags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}-VGW"}})
+      expect(properties["Tags"]).to include({"Key"=>"transitvpc:spoke", "Value"=>{"Ref"=>"EnableTransitVPC"}})
+      expect(properties["Tags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["Tags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end
@@ -1635,8 +1640,10 @@ describe 'compiled component' do
       expect(properties["HostedZoneConfig"]).to eq({"Comment"=>{"Fn::Sub"=>"Hosted Zone for ${EnvironmentName}"}})
     end
 
-    it 'has property HostedZoneTags' do
-      expect(properties["HostedZoneTags"]).to eq([{"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}.${DnsDomain}"}}, {"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}}, {"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}}])
+    it 'has property Tags' do
+      expect(properties["HostedZoneTags"]).to include({"Key"=>"Name", "Value"=>{"Fn::Sub"=>"${EnvironmentName}.${DnsDomain}"}})
+      expect(properties["HostedZoneTags"]).to include({"Key"=>"Environment", "Value"=>{"Ref"=>"EnvironmentName"}})
+      expect(properties["HostedZoneTags"]).to include({"Key"=>"EnvironmentType", "Value"=>{"Ref"=>"EnvironmentType"}})
     end
 
   end

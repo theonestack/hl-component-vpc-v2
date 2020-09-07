@@ -9,7 +9,7 @@ CloudFormation do
   vpc_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-vpc") })
   vpc_tags.push({ Key: 'Environment', Value: Ref(:EnvironmentName) })
   vpc_tags.push({ Key: 'EnvironmentType', Value: Ref(:EnvironmentType) })
-  vpc_tags.push(*tags.map {|k,v| {Key: k, Value: FnSub(v)}}).uniq { |h| h[:Key] }
+  vpc_tags.push(*tags.map {|k,v| {Key: FnSub(k), Value: FnSub(v)}})
     
   ###
   # VPC
@@ -395,11 +395,6 @@ CloudFormation do
     
     subnet_grp_refs = []
 
-    subnet_tags = vpc_tags.map(&:clone)
-    if cfg.key?('tags')
-      subnet_tags.push(*cfg['tags']).uniq! { |t| t[:Key] }
-    end
-
     external_parameters[:max_availability_zones].times do |az|
       multiplyer = az+index*external_parameters[:subnet_multiplyer]
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
@@ -411,15 +406,17 @@ CloudFormation do
         subnet_cidr = FnSelect(multiplyer,FnCidr(Ref('CIDR'),(external_parameters[:subnet_multiplyer]*external_parameters[:subnets].length),Ref('SubnetBits')))
       end
 
+      subnet_tags = vpc_tags.map(&:clone)
+      subnet_tags << { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) }
+      subnet_tags << { Key: 'Type', Value: cfg['type'] }
+      subnet_tags.push(*cfg['tags'].map{|t| t.transform_keys(&:to_sym) }) if cfg.key?('tags')
+
       EC2_Subnet(subnet_name_az) {
         Condition("CreateAvailabilityZone#{az}")
         VpcId Ref(:VPC)
         CidrBlock subnet_cidr
         AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
-        Tags [
-          { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) },
-          { Key: 'Type', Value: cfg['type'] }
-        ].push(*subnet_tags).uniq! { |t| t[:Key] }
+        Tags subnet_tags.reverse.uniq {|t| t[:Key]}
       }
       
       subnet_grp_refs.push(Ref(subnet_name_az))

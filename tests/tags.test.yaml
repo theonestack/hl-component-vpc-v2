@@ -1,0 +1,19 @@
+test_metadata:
+  type: config
+  name: tags
+  description: extra tags on resources
+
+tags:
+  Application: MyApp
+  CreatedBy: theonestack
+
+subnets:
+  public:
+    tags:
+      -
+        Key: 
+          Fn::Sub: kubernetes.io/cluster/${EnvironmentName}-cluster
+        Value: shared
+      -
+        Key: kubernetes.io/role/elb
+        Value: 1
