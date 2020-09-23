@@ -48,6 +48,11 @@ CloudFormation do
     Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-VPCCidr")
   }
   
+  Output(:DefaultSecurityGroup) {
+    Value(FnGetAtt(:VPC, :DefaultSecurityGroup))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DefaultSecurityGroup")
+  }
+
   EC2_DHCPOptions(:DHCPOptionSet) {
     DomainName FnSub(external_parameters[:dns_format])
     DomainNameServers ['AmazonProvidedDNS']
