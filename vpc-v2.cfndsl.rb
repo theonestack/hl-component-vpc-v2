@@ -163,6 +163,9 @@ CloudFormation do
     AssumeRolePolicyDocument service_assume_role_policy('ec2')
     Path '/'
     Policies iam_role_policies(external_parameters[:nat_iam_policies])
+    ManagedPolicyArns([
+      "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+    ])
   }
       
   InstanceProfile(:NatInstanceProfile) {
@@ -318,13 +321,11 @@ CloudFormation do
       #!/bin/bash
       INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
       aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
-      sysctl -w net.ipv4.ip_forward=1
-      iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
-      GW=$(curl -s http://169.254.169.254/2014-11-05/meta-data/local-ipv4/ | cut -d '.' -f 1-3).1
-      route del -net 0.0.0.0 gw $GW netmask 0.0.0.0 dev eth0 metric 0
-      route add -net 0.0.0.0 gw $GW netmask 0.0.0.0 dev eth0 metric 10002
-      EOF
+      /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
       systemctl disable postfix
+      systemctl stop postfix
+      systemctl enable snat
+      systemctl start snat
     USERDATA
 
     template_data = {
@@ -354,6 +355,62 @@ CloudFormation do
     EC2_LaunchTemplate("LaunchTemplate#{az}") {
       Condition("CreateNatInstance#{az}")
       LaunchTemplateData(template_data)
+      Metadata({
+        'AWS::CloudFormation::Init': {
+          configSets: {
+            default: [
+              'setup'
+            ]
+          },
+          setup: {
+            files: {
+              '/opt/snat.sh': {
+                mode: '000755',
+                owner: 'root',
+                group: 'root',
+                content: <<~CONTENT
+                  #!/bin/bash -x
+
+                  # wait for eth1
+                  while ! ip link show dev eth1; do
+                    sleep 1
+                  done
+
+                  # enable IP forwarding and NAT
+                  sysctl -q -w net.ipv4.ip_forward=1
+                  sysctl -q -w net.ipv4.conf.eth1.send_redirects=0
+                  iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE
+
+                  # switch the default route to eth1
+                  ip route del default dev eth0
+
+                  # wait for network connection
+                  curl --retry 10 http://www.example.com
+
+                  # reestablish connections
+                  systemctl restart amazon-ssm-agent.service
+                CONTENT
+              },
+              '/etc/systemd/system/snat.service': {
+                mode: '000644',
+                owner: 'root',
+                group: 'root',
+                content: <<~CONTENT
+                  [Unit]
+                  Description = SNAT via ENI eth1
+
+                  [Service]
+                  ExecStart = /opt/snat.sh
+                  Type = oneshot
+
+                  [Install]
+                  WantedBy = multi-user.target
+                CONTENT
+              }
+            }
+          }
+        }
+      })
     }
     
     asg_tags = nat_tags.map(&:clone)
