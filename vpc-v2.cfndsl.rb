@@ -571,6 +571,11 @@ CloudFormation do
         SubnetIds subnet_groups[external_parameters[:endpoint_subnets]]
         SecurityGroupIds [ Ref(:VpcEndpointInterface) ]
       }
+
+      Output("#{vpce.capitalize}VPCEndpointId") {
+        Value(Ref("#{vpce.capitalize}VpcEndpoint"))
+        Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{vpce.capitalize}VPCEndpointId")
+      }
     end
   end
   
