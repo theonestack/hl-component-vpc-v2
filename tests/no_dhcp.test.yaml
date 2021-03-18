@@ -1,0 +1,6 @@
+test_metadata:
+  type: config
+  name: no_dhcp
+  description: disable the dhcp option group
+
+enable_dhcp: false

@@ -68,6 +68,7 @@ acl_rules:
 dns_format: ${EnvironmentName}.${DnsDomain}
 
 enable_transit_vpc: true
+enable_dhcp: true
 
 create_hosted_zone: true
 manage_ns_records: false

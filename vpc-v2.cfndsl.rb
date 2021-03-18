@@ -52,17 +52,19 @@ CloudFormation do
     Value(FnGetAtt(:VPC, :DefaultSecurityGroup))
     Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DefaultSecurityGroup")
   }
+  
+  if external_parameters[:enable_dhcp]
+    EC2_DHCPOptions(:DHCPOptionSet) {
+      DomainName FnSub(external_parameters[:dns_format])
+      DomainNameServers ['AmazonProvidedDNS']
+      Tags vpc_tags
+    }
 
-  EC2_DHCPOptions(:DHCPOptionSet) {
-    DomainName FnSub(external_parameters[:dns_format])
-    DomainNameServers ['AmazonProvidedDNS']
-    Tags vpc_tags
-  }
-
-  EC2_VPCDHCPOptionsAssociation(:DHCPOptionsAssociation) {
-    VpcId Ref(:VPC)
-    DhcpOptionsId Ref(:DHCPOptionSet)
-  }
+    EC2_VPCDHCPOptionsAssociation(:DHCPOptionsAssociation) {
+      VpcId Ref(:VPC)
+      DhcpOptionsId Ref(:DHCPOptionSet)
+    }
+  end
   
   EC2_InternetGateway(:InternetGateway) {
     Tags vpc_tags
