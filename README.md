@@ -193,6 +193,15 @@ dns_format: ${EnvironmentName}.${DnsDomain}
 dns_format: ${DnsDomain}
 ```
 
+### DHCP
+
+by default a dhcp option group is created using the provided dns name and the amazon provided dns name servers. 
+this can be disabled by setting the following config to remove the `DHCPOptions` and `VPCDHCPOptionsAssociation` resources from the template.
+
+```yaml
+enable_dhcp: false
+```
+
 ### NAT
 
 NATs can be toggled between NAT Instances (EC2) and AWS managed NAT Gateways.
