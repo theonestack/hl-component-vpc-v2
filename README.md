@@ -48,7 +48,7 @@ To configure your AZ settings, set `az_mapping` to true
 az_mapping: true
 ```
 
-Then configure a map in the following structure to define your AZs
+Then configure a [Map](https://github.com/theonestack/cfhighlander#cloudformation-mappings) in the following structure to define your AZs
 
 ```yaml
 Accounts:
