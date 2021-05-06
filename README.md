@@ -29,6 +29,49 @@ kurgan add vpc-v2
 
 ## Configuration
 
+### Selecting Availability Zones
+
+By default the `vpc-v2` component will automatically select the AZs. This is achieved by looping over the `max_availability_zones` count and using the `Fn::GetAZs` Cloudformation function to select the AZ id.
+
+```rb
+max_availability_zones.times |az|
+  selected_az = FnSelect(az, FnGetAZs(Ref('AWS::Region')))
+end
+```
+
+However if you wish to define which as AZs you want to use you can by configuring a map per AWS account with the AZs you wish to use. 
+**NOTE:** the total count of AZ's defined in the map for each account has to be the same value as `max_availability_zones`.
+
+To configure your AZ settings, set `az_mapping` to true
+
+```yaml
+az_mapping: true
+```
+
+Then configure a [Map](https://github.com/theonestack/cfhighlander#cloudformation-mappings) in the following structure to define your AZs
+
+```yaml
+Accounts:
+  '000000000000': # AWS Account Id
+    AZs: '3,5,0' # Comma delimited list of numerical values that maps to the Availability Zone for that account
+```
+
+the numerical values will map to the Availability Zone retuned from the `Fn::GetAZs` function in the AWS account. For example in `us-east-1` returns
+
+```rb
+[ "us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1e", "us-east-1f" ]
+```
+
+therefore the mapping `AZs: '3,5,0'` will use AZs `[ "us-east-1d", "us-east-1f", "us-east-1a" ]`
+
+the new function to retrieve the AZ becomes
+
+```rb
+max_availability_zones.times |az|
+  selected_az = FnSelect(FnSelect(az, FnSplit(',', FnFindInMap('Accounts', Ref('AWS::AccountId'), 'AZs'))), FnGetAZs(Ref('AWS::Region')))
+end
+```
+
 ### Subnetting
 
 **Subnet Allocation**

@@ -1,0 +1,6 @@
+test_metadata:
+  type: config
+  name: az_mapping
+  description: defing the az's through a map
+
+az_mapping: true

@@ -178,7 +178,20 @@ CloudFormation do
   
   external_parameters[:max_availability_zones].times do |az|
     
-    get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
+    if az_mapping == true
+      get_az = { 
+        AZ: FnSelect(
+            FnSelect(az, 
+              FnSplit(',', 
+                FnFindInMap('Accounts', Ref('AWS::AccountId'), 'AZs')
+              )
+            ), 
+          FnGetAZs(Ref('AWS::Region'))
+        ) 
+      }
+    else
+      get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
+    end
     matches = ((az+1)..external_parameters[:max_availability_zones]).to_a
     
     # Determins whether we create resources in a particular availability zone
@@ -462,7 +475,19 @@ CloudFormation do
     external_parameters[:max_availability_zones].times do |az|
       multiplyer = az+index*external_parameters[:subnet_multiplyer]
       subnet_name_az = "Subnet#{cfg['name']}#{az}"
-      get_az = { AZ: FnSelect(az, FnGetAZs(Ref('AWS::Region'))) }
+      
+      if az_mapping == true
+        get_az = FnSelect(
+              FnSelect(az, 
+                FnSplit(',', 
+                  FnFindInMap('Accounts', Ref('AWS::AccountId'), 'AZs')
+                )
+              ), 
+            FnGetAZs(Ref('AWS::Region'))
+          )
+      else
+        get_az = FnSelect(az, FnGetAZs(Ref('AWS::Region')))
+      end
       
       if external_parameters[:subnet_parameters]
         subnet_cidr = FnSelect(az, Ref("#{cfg['name']}SubnetList"))
@@ -471,7 +496,7 @@ CloudFormation do
       end
 
       subnet_tags = vpc_tags.map(&:clone)
-      subnet_tags << { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", get_az) }
+      subnet_tags << { Key: 'Name', Value: FnSub("${EnvironmentName}-#{cfg['name'].downcase}-${AZ}", { AZ: get_az }) }
       subnet_tags << { Key: 'Type', Value: cfg['type'] }
       subnet_tags.push(*cfg['tags'].map{|t| t.transform_keys(&:to_sym) }) if cfg.key?('tags')
 
@@ -479,7 +504,7 @@ CloudFormation do
         Condition("CreateAvailabilityZone#{az}")
         VpcId Ref(:VPC)
         CidrBlock subnet_cidr
-        AvailabilityZone FnSelect(az, FnGetAZs(Ref('AWS::Region')))
+        AvailabilityZone get_az
         Tags subnet_tags.reverse.uniq {|t| t[:Key]}
       }
       
