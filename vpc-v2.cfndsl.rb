@@ -66,18 +66,24 @@ CloudFormation do
     }
   end
   
-  EC2_InternetGateway(:InternetGateway) {
-    Tags vpc_tags
-  }
+  if external_parameters[:enable_internet_gateway]
+    EC2_InternetGateway(:InternetGateway) {
+      Tags vpc_tags
+    }
   
-  EC2_VPCGatewayAttachment(:AttachGateway){
-    VpcId Ref(:VPC)
-    InternetGatewayId Ref(:InternetGateway)
-  }
+    EC2_VPCGatewayAttachment(:AttachGateway){
+      VpcId Ref(:VPC)
+      InternetGatewayId Ref(:InternetGateway)
+    }
+  end
   
   EC2_RouteTable(:RouteTablePublic) {
     VpcId Ref(:VPC)
     Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-public") }].push(*vpc_tags).uniq! { |t| t[:Key] }
+  }
+  Output(:PublicRouteTableIds) {
+    Value(Ref(:RouteTablePublic))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PublicRouteTableIds")
   }
     
   EC2_NetworkAcl(:NetworkAclPublic) {
@@ -89,13 +95,14 @@ CloudFormation do
     VpcId Ref(:VPC)
     Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-private") }].push(*vpc_tags).uniq! { |t| t[:Key] }
   }
-  
-  EC2_Route(:PublicRouteOutToInternet) {
-    DependsOn ['AttachGateway']
-    RouteTableId Ref(:RouteTablePublic)
-    DestinationCidrBlock '0.0.0.0/0'
-    GatewayId Ref(:InternetGateway)
-  }
+  if external_parameters[:enable_internet_gateway]
+    EC2_Route(:PublicRouteOutToInternet) {
+      DependsOn ['AttachGateway']
+      RouteTableId Ref(:RouteTablePublic)
+      DestinationCidrBlock '0.0.0.0/0'
+      GatewayId Ref(:InternetGateway)
+    }
+  end
   
   ###
   # Network Access Control Lists
@@ -134,10 +141,11 @@ CloudFormation do
   # NAT Resource and conditions
   ##
   
-  Condition(:CreateNatGatewayEIP, FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""))
+  Condition(:CreateNatGatewayEIP, FnAnd([FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""),FnNot(Condition(:NatDisabled))]))
   Condition(:SpotEnabled, FnEquals(Ref(:NatInstancesSpot), 'true'))
   Condition(:ManagedNat, FnEquals(Ref(:NatType), 'managed'))
   Condition(:NatInstance, FnEquals(Ref(:NatType), 'instances'))
+  Condition(:NatDisabled, FnEquals(Ref(:NatType), 'disabled'))
       
   EC2_SecurityGroup(:NatInstanceSecurityGroup) { 
     Condition(:NatInstance)
@@ -281,7 +289,9 @@ CloudFormation do
     
     EC2_EIP("NatIPAddress#{az}") {
       Condition "CreateNatGatewayEIP#{az}"
-      DependsOn ["AttachGateway"]
+      if external_parameters[:enable_internet_gateway]
+        DependsOn ["AttachGateway"]
+      end
       Domain 'vpc'
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
@@ -462,6 +472,11 @@ CloudFormation do
     
   end
   
+  Output(:PrivateRouteTableIds) {
+    Value(FnJoin(",",route_tables))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PrivateRouteTableIds")
+  }
+
   ##
   # Subnets
   ##

@@ -70,6 +70,7 @@ dns_format: ${EnvironmentName}.${DnsDomain}
 
 enable_transit_vpc: true
 enable_dhcp: true
+enable_internet_gateway: true
 
 create_hosted_zone: true
 manage_ns_records: false
