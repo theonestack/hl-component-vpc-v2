@@ -55,7 +55,7 @@ CfhighlanderTemplate do
       allowedValues: ['managed','instances','disabled']
       
     ComponentParam 'NatAmi', '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs',
-      type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+      type: String
       
     ComponentParam 'NatInstanceType', 't3.nano'
     
