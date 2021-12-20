@@ -1,0 +1,17 @@
+test_metadata:
+  type: config
+  name: custom_routes
+  description: custom routes in code
+
+tags:
+  Application: MyApp
+  CreatedBy: theonestack
+
+
+max_availability_zones: 2
+custom_routes:
+      192.168.1.0/24: tgw-0a9c82d1928fce121
+      10.8.0.0/16: pcx-1c1f309b02067137e
+      10.9.0.0/16: tgw-0a9c82d1928fce121
+      10.10.0.0/16: tgw-0a9c82d1928fce121
+      192.168.64.0/22: tgw-0a9c82d1928fce121
