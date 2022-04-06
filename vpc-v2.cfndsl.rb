@@ -640,6 +640,17 @@ CloudFormation do
     Value(Ref(:S3VpcEndpoint))
     Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-S3VPCEndpointId")
   }
+
+  EC2_VPCEndpoint(:DynamodbVpcEndpoint) {
+    VpcId Ref(:VPC)
+    ServiceName FnSub("com.amazonaws.${AWS::Region}.dynamodb")
+    RouteTableIds route_tables
+  }
+  
+  Output(:DynamodbVPCEndpointId) {
+    Value(Ref(:DynamodbVpcEndpoint))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DynamodbVPCEndpointId")
+  }
   
   endpoints = external_parameters.fetch(:endpoints, [])
   
