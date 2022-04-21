@@ -200,7 +200,7 @@ ip_blocks:
 
 ### VPC Gateway Endpoints
 
-A S3 VPC Gateway Endpoint is always created and added to all route tables. 
+S3 and DynamoDB VPC Gateway Endpoints are always created and added to all route tables. 
 
 ### VPC Interface Endpoints
 

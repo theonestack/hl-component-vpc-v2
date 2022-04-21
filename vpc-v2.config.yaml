@@ -54,7 +54,6 @@ acl_rules:
     acl: private
     egress: true
     number: 100
-    egress: true
     protocol: -1
     ips:
       - public
