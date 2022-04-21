@@ -1,0 +1,7 @@
+test_metadata:
+  type: config
+  name: no_internet_gateway
+  description: disable internet gateway
+
+# Insert your tests here
+enable_internet_gateway: false
