@@ -3,6 +3,9 @@ test_metadata:
   name: custom_routes
   description: custom routes in code
 
+test_parameters:
+  TransitGateway: tgw-0a9c82d1928fce121
+
 tags:
   Application: MyApp
   CreatedBy: theonestack
@@ -15,3 +18,7 @@ custom_routes:
       10.9.0.0/16: tgw-0a9c82d1928fce121
       10.10.0.0/16: tgw-0a9c82d1928fce121
       192.168.64.0/22: tgw-0a9c82d1928fce121
+      192.168.65.0/22:
+        type: tgw
+        value:
+          Ref: TransitGateway
