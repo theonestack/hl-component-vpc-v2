@@ -47,4 +47,22 @@ describe 'compiled component' do
 
   end
 
+  context 'Resource CustomRoute05' do
+
+    let(:properties) { template["Resources"]["CustomRoute05"]["Properties"] }
+
+    it 'has property RouteTableId' do
+      expect(properties["RouteTableId"]).to eq({"Ref"=>"RouteTablePrivate0"})
+    end
+
+    it 'has property DestinationCidrBlock' do
+      expect(properties["DestinationCidrBlock"]).to eq("192.168.65.0/22")
+    end
+
+    it 'has property TransitGatewayId' do
+      expect(properties["TransitGatewayId"]).to eq({"Ref" => "TransitGateway"})
+    end
+
+  end
+
 end

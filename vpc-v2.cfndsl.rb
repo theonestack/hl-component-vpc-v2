@@ -112,7 +112,14 @@ CloudFormation do
   ##
   if custom_routes.length > 0
     custom_routes.each_with_index do |(key,value),index|
-      routeType = value.split('-').first
+
+      if value.is_a?(String)
+        routeType = value.split('-').first
+        routeValue = value
+      else
+        routeType = value['type']
+        routeValue = value['value']
+      end
       
       EC2_Route("CustomRoutePublic#{index}") {
         DependsOn ['AttachGateway']
@@ -120,25 +127,25 @@ CloudFormation do
         DestinationCidrBlock key
         case routeType
         when "tgw"
-          TransitGatewayId value
+          TransitGatewayId routeValue
         when "eigw"
-          EgressOnlyInternetGatewayId value
+          EgressOnlyInternetGatewayId routeValue
         when "vpce"
-          VpcEndpointId value
+          VpcEndpointId routeValue
         when "vgw"
-          GatewayId value
+          GatewayId routeValue
         when "igw"
-          GatewayId value
+          GatewayId routeValue
         when "nat"
-          NatGatewayId value
+          NatGatewayId routeValue
         when "i"
-          InstanceId value
+          InstanceId routeValue
         when "eni"
-          NetworkInterfaceId value
+          NetworkInterfaceId routeValue
         when "pcx"
-          VpcPeeringConnectionId value
+          VpcPeeringConnectionId routeValue
         when "lgw"
-          LocalGatewayId value
+          LocalGatewayId routeValue
         end
       }
       
@@ -364,32 +371,38 @@ CloudFormation do
     ##
     if custom_routes.length > 0
       custom_routes.each_with_index do |(key,value),index|
-        routeType = value.split('-').first
+        if value.is_a?(String)
+          routeType = value.split('-').first
+          routeValue = value
+        else
+          routeType = value['type']
+          routeValue = value['value']
+        end
         
         EC2_Route("CustomRoute#{az}#{index}") {
           RouteTableId Ref("RouteTablePrivate#{az}")
           DestinationCidrBlock key
           case routeType
           when "tgw"
-            TransitGatewayId value
+            TransitGatewayId routeValue
           when "eigw"
-            EgressOnlyInternetGatewayId value
+            EgressOnlyInternetGatewayId routeValue
           when "vpce"
-            VpcEndpointId value
+            VpcEndpointId routeValue
           when "vgw"
-            GatewayId value
+            GatewayId routeValue
           when "igw"
-            GatewayId value
+            GatewayId routeValue
           when "nat"
-            NatGatewayId value
+            NatGatewayId routeValue
           when "i"
-            InstanceId value
+            InstanceId routeValue
           when "eni"
-            NetworkInterfaceId value
+            NetworkInterfaceId routeValue
           when "pcx"
-            VpcPeeringConnectionId value
+            VpcPeeringConnectionId routeValue
           when "lgw"
-            LocalGatewayId value
+            LocalGatewayId routeValue
           end
         }
         
