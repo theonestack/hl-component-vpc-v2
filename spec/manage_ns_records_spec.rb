@@ -132,7 +132,7 @@ describe 'compiled component' do
     end
 
     it 'has property Runtime' do
-      expect(properties["Runtime"]).to eq("python3.7")
+      expect(properties["Runtime"]).to eq("python3.11")
     end
 
     it 'has property Timeout' do
