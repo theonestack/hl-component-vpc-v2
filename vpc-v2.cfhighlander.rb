@@ -55,7 +55,7 @@ CfhighlanderTemplate do
       allowedValues: ['managed','instances','disabled']
       
     ComponentParam 'NatAmi', '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-ebs',
-      type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+      type: 'String'
       
     ComponentParam 'NatInstanceType', 't3.nano'
     
@@ -64,9 +64,10 @@ CfhighlanderTemplate do
     
   end
   
-  Component template: 'route53-zone@1.0.2', name: 'dnszone', render: Inline do
+  Component template: 'route53-zone@1.4.0', name: 'dnszone', render: Inline do
     parameter name: 'CreateZone', value: 'true'
     parameter name: 'RootDomainName', value: FnSub('${DnsDomain}.')
+    parameter name: 'DnsDomain', value: Ref(:DnsDomain)
   end if manage_ns_records && create_hosted_zone
 
 end

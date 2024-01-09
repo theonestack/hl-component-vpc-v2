@@ -200,7 +200,7 @@ ip_blocks:
 
 ### VPC Gateway Endpoints
 
-A S3 VPC Gateway Endpoint is always created and added to all route tables. 
+S3 and DynamoDB VPC Gateway Endpoints are always created and added to all route tables. 
 
 ### VPC Interface Endpoints
 
@@ -296,6 +296,19 @@ To set the Amazon side Asn for the VpnGateway set the following config with the 
 
 ```yaml
 vgw_asn: 64512
+```
+
+### Private VPC
+
+A Private VPC is a vpc without its own access to the internet, it does not require an InternetGateway or NAT Gateway's/Instances.
+
+Configure the NAT type as `disabled` as outlined [here](#nat)
+
+By default an internet gateway is created and attached to the VPC, with a route out to the internet configured within the public route table.
+This can be disabled by setting the following config to remove the `InternetGateway`,`VPCGatewayAttachment` and `Route` resources from the template.
+
+```yaml
+enable_internet_gateway: false
 ```
 
 ## Outputs/Exports

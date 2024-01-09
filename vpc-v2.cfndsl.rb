@@ -3,7 +3,9 @@ require 'ipaddr'
 CloudFormation do
   
   tags = external_parameters.fetch(:tags, {})
-  
+
+  custom_routes = external_parameters.fetch(:custom_routes, {})
+
   vpc_tags, route_tables = Array.new(2) { [] }
   
   vpc_tags.push({ Key: 'Name', Value: FnSub("${EnvironmentName}-vpc") })
@@ -66,18 +68,24 @@ CloudFormation do
     }
   end
   
-  EC2_InternetGateway(:InternetGateway) {
-    Tags vpc_tags
-  }
+  if external_parameters[:enable_internet_gateway]
+    EC2_InternetGateway(:InternetGateway) {
+      Tags vpc_tags
+    }
   
-  EC2_VPCGatewayAttachment(:AttachGateway){
-    VpcId Ref(:VPC)
-    InternetGatewayId Ref(:InternetGateway)
-  }
+    EC2_VPCGatewayAttachment(:AttachGateway){
+      VpcId Ref(:VPC)
+      InternetGatewayId Ref(:InternetGateway)
+    }
+  end
   
   EC2_RouteTable(:RouteTablePublic) {
     VpcId Ref(:VPC)
     Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-public") }].push(*vpc_tags).uniq! { |t| t[:Key] }
+  }
+  Output(:PublicRouteTableIds) {
+    Value(Ref(:RouteTablePublic))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PublicRouteTableIds")
   }
     
   EC2_NetworkAcl(:NetworkAclPublic) {
@@ -89,13 +97,60 @@ CloudFormation do
     VpcId Ref(:VPC)
     Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-private") }].push(*vpc_tags).uniq! { |t| t[:Key] }
   }
-  
-  EC2_Route(:PublicRouteOutToInternet) {
-    DependsOn ['AttachGateway']
-    RouteTableId Ref(:RouteTablePublic)
-    DestinationCidrBlock '0.0.0.0/0'
-    GatewayId Ref(:InternetGateway)
-  }
+
+  if external_parameters[:enable_internet_gateway]
+    EC2_Route(:PublicRouteOutToInternet) {
+      DependsOn ['AttachGateway']
+      RouteTableId Ref(:RouteTablePublic)
+      DestinationCidrBlock '0.0.0.0/0'
+      GatewayId Ref(:InternetGateway)
+    }
+  end
+
+  ##
+  # Custom routes
+  ##
+  if custom_routes.length > 0
+    custom_routes.each_with_index do |(key,value),index|
+
+      if value.is_a?(String)
+        routeType = value.split('-').first
+        routeValue = value
+      else
+        routeType = value['type']
+        routeValue = value['value']
+      end
+      
+      EC2_Route("CustomRoutePublic#{index}") {
+        DependsOn ['AttachGateway']
+        RouteTableId Ref(:RouteTablePublic)
+        DestinationCidrBlock key
+        case routeType
+        when "tgw"
+          TransitGatewayId routeValue
+        when "eigw"
+          EgressOnlyInternetGatewayId routeValue
+        when "vpce"
+          VpcEndpointId routeValue
+        when "vgw"
+          GatewayId routeValue
+        when "igw"
+          GatewayId routeValue
+        when "nat"
+          NatGatewayId routeValue
+        when "i"
+          InstanceId routeValue
+        when "eni"
+          NetworkInterfaceId routeValue
+        when "pcx"
+          VpcPeeringConnectionId routeValue
+        when "lgw"
+          LocalGatewayId routeValue
+        end
+      }
+      
+    end
+  end
   
   ###
   # Network Access Control Lists
@@ -134,10 +189,11 @@ CloudFormation do
   # NAT Resource and conditions
   ##
   
-  Condition(:CreateNatGatewayEIP, FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""))
+  Condition(:CreateNatGatewayEIP, FnAnd([FnEquals(FnJoin("", Ref(:NatGatewayEIPs)), ""),FnNot(Condition(:NatDisabled))]))
   Condition(:SpotEnabled, FnEquals(Ref(:NatInstancesSpot), 'true'))
   Condition(:ManagedNat, FnEquals(Ref(:NatType), 'managed'))
   Condition(:NatInstance, FnEquals(Ref(:NatType), 'instances'))
+  Condition(:NatDisabled, FnEquals(Ref(:NatType), 'disabled'))
       
   EC2_SecurityGroup(:NatInstanceSecurityGroup) { 
     Condition(:NatInstance)
@@ -281,7 +337,9 @@ CloudFormation do
     
     EC2_EIP("NatIPAddress#{az}") {
       Condition "CreateNatGatewayEIP#{az}"
-      DependsOn ["AttachGateway"]
+      if external_parameters[:enable_internet_gateway]
+        DependsOn ["AttachGateway"]
+      end
       Domain 'vpc'
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-nat-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
@@ -307,6 +365,49 @@ CloudFormation do
         Ref("NatGateway#{az}"), 
         Ref("NatGateway0")) # defaults to nat 0 if no nat in that az
     }
+
+    ##
+    # Custom routes
+    ##
+    if custom_routes.length > 0
+      custom_routes.each_with_index do |(key,value),index|
+        if value.is_a?(String)
+          routeType = value.split('-').first
+          routeValue = value
+        else
+          routeType = value['type']
+          routeValue = value['value']
+        end
+        
+        EC2_Route("CustomRoute#{az}#{index}") {
+          RouteTableId Ref("RouteTablePrivate#{az}")
+          DestinationCidrBlock key
+          case routeType
+          when "tgw"
+            TransitGatewayId routeValue
+          when "eigw"
+            EgressOnlyInternetGatewayId routeValue
+          when "vpce"
+            VpcEndpointId routeValue
+          when "vgw"
+            GatewayId routeValue
+          when "igw"
+            GatewayId routeValue
+          when "nat"
+            NatGatewayId routeValue
+          when "i"
+            InstanceId routeValue
+          when "eni"
+            NetworkInterfaceId routeValue
+          when "pcx"
+            VpcPeeringConnectionId routeValue
+          when "lgw"
+            LocalGatewayId routeValue
+          end
+        }
+        
+      end
+    end
     
     ##
     # Nat Gateway Instances
@@ -462,6 +563,11 @@ CloudFormation do
     
   end
   
+  Output(:PrivateRouteTableIds) {
+    Value(FnJoin(",",route_tables))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PrivateRouteTableIds")
+  }
+
   ##
   # Subnets
   ##
@@ -562,6 +668,17 @@ CloudFormation do
   Output(:S3VPCEndpointId) {
     Value(Ref(:S3VpcEndpoint))
     Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-S3VPCEndpointId")
+  }
+
+  EC2_VPCEndpoint(:DynamodbVpcEndpoint) {
+    VpcId Ref(:VPC)
+    ServiceName FnSub("com.amazonaws.${AWS::Region}.dynamodb")
+    RouteTableIds route_tables
+  }
+  
+  Output(:DynamodbVPCEndpointId) {
+    Value(Ref(:DynamodbVpcEndpoint))
+    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DynamodbVPCEndpointId")
   }
   
   endpoints = external_parameters.fetch(:endpoints, [])
