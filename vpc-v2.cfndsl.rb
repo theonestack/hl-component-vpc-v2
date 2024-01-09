@@ -170,7 +170,7 @@ CloudFormation do
     ])
   }
       
-  InstanceProfile(:NatInstanceProfile) {
+  IAM_InstanceProfile(:NatInstanceProfile) {
     Condition(:NatInstance)
     Path '/'
     Roles [Ref(:NatInstanceRole)]
