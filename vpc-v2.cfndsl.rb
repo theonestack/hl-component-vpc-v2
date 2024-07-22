@@ -629,6 +629,11 @@ CloudFormation do
         SubnetId Ref(subnet_name_az)
         NetworkAclId Ref("NetworkAcl#{cfg['type'].capitalize}")
       }
+
+      Output("#{cfg['name']}SubnetAZ") {
+        FnGetAtt(subnet_name_az, :AvailabilityZone)
+        Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{cfg['name']}SubnetsAZ")
+      }
       
     end
     
