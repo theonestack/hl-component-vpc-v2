@@ -630,9 +630,9 @@ CloudFormation do
         NetworkAclId Ref("NetworkAcl#{cfg['type'].capitalize}")
       }
 
-      Output("#{cfg['name']}#{az}Subnet-AZ") {
+      Output("#{cfg['name']}#{az}SubnetAZ") {
         Value(FnGetAtt(subnet_name_az, :AvailabilityZone))
-        Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{cfg['name']}Subnet#{az}-AZ")
+        Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{cfg['name']}Subnet#{az}AZ")
       }
       
     end
