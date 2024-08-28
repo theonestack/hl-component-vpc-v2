@@ -1,6 +1,8 @@
 require 'ipaddr'
 
 CloudFormation do
+
+  export = external_parameters.fetch(:export_name, external_parameters[:component_name])
   
   tags = external_parameters.fetch(:tags, {})
 
@@ -42,17 +44,17 @@ CloudFormation do
   
   Output(:VPCId) {
     Value(Ref(:VPC))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-VPCId")
+    Export FnSub("${EnvironmentName}-#{export}-VPCId")
   }
   
   Output(:VPCCidr) {
     Value(FnGetAtt(:VPC, :CidrBlock))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-VPCCidr")
+    Export FnSub("${EnvironmentName}-#{export}-VPCCidr")
   }
   
   Output(:DefaultSecurityGroup) {
     Value(FnGetAtt(:VPC, :DefaultSecurityGroup))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DefaultSecurityGroup")
+    Export FnSub("${EnvironmentName}-#{export}-DefaultSecurityGroup")
   }
   
   if external_parameters[:enable_dhcp]
@@ -85,7 +87,7 @@ CloudFormation do
   }
   Output(:PublicRouteTableIds) {
     Value(Ref(:RouteTablePublic))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PublicRouteTableIds")
+    Export FnSub("${EnvironmentName}-#{export}-PublicRouteTableIds")
   }
     
   EC2_NetworkAcl(:NetworkAclPublic) {
@@ -565,7 +567,7 @@ CloudFormation do
   
   Output(:PrivateRouteTableIds) {
     Value(FnJoin(",",route_tables))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-PrivateRouteTableIds")
+    Export FnSub("${EnvironmentName}-#{export}-PrivateRouteTableIds")
   }
 
   ##
@@ -639,7 +641,7 @@ CloudFormation do
     
     Output("#{cfg['name']}Subnets") {
       Value(FnJoin(',', subnet_grp_condition))
-      Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{cfg['name']}Subnets")
+      Export FnSub("${EnvironmentName}-#{export}-#{cfg['name']}Subnets")
     }
     
     subnet_groups[cfg['name']] = subnet_grp_condition
@@ -667,7 +669,7 @@ CloudFormation do
   
   Output(:S3VPCEndpointId) {
     Value(Ref(:S3VpcEndpoint))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-S3VPCEndpointId")
+    Export FnSub("${EnvironmentName}-#{export}-S3VPCEndpointId")
   }
 
   EC2_VPCEndpoint(:DynamodbVpcEndpoint) {
@@ -678,7 +680,7 @@ CloudFormation do
   
   Output(:DynamodbVPCEndpointId) {
     Value(Ref(:DynamodbVpcEndpoint))
-    Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-DynamodbVPCEndpointId")
+    Export FnSub("${EnvironmentName}-#{export}-DynamodbVPCEndpointId")
   }
   
   endpoints = external_parameters.fetch(:endpoints, [])
@@ -718,7 +720,7 @@ CloudFormation do
 
       Output("#{vpce.capitalize}VPCEndpointId") {
         Value(Ref("#{vpce.capitalize}VpcEndpoint"))
-        Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-#{vpce.capitalize}VPCEndpointId")
+        Export FnSub("${EnvironmentName}-#{export}-#{vpce.capitalize}VPCEndpointId")
       }
     end
   end
@@ -820,7 +822,7 @@ CloudFormation do
     
     Output(:HostedZone) {
       Value(Ref(:HostedZone))
-      Export FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-hosted-zone")
+      Export FnSub("${EnvironmentName}-#{export}-hosted-zone")
     }
   end
     
