@@ -435,16 +435,19 @@ CloudFormation do
       NetworkInterfaceId Ref("NetworkInterface#{az}")
     }
 
-    nat_userdata = <<~USERDATA
-      #!/bin/bash
-      INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
-      aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
-      /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
-      systemctl disable postfix
-      systemctl stop postfix
-      systemctl enable snat
-      systemctl start snat
-    USERDATA
+    if external_parameters[:nat_userdata]
+      nat_userdata = external_parameters[:nat_userdata]
+    else  
+      nat_userdata = <<~USERDATA
+        #!/bin/bash
+        INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+        aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
+        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
+        systemctl disable postfix
+        systemctl stop postfix
+        systemctl enable snat
+        systemctl start snat
+      USERDATA
 
     template_data = {
       TagSpecifications: [
