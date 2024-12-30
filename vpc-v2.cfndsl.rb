@@ -180,8 +180,14 @@ CloudFormation do
         RuleAction rule['action'] || 'allow'
         Egress rule['egress'] || false
         CidrBlock cidr
-        unless rule.has_key?('protocol') && rule['protocol'].to_s == '-1'
+        unless rule.has_key?('protocol') && ((rule['protocol'].to_s == '-1' || rule['protocol'].to_s == '1'))
           PortRange ({ From: rule['from'], To: rule['to'] || rule['from'] })
+        end
+        if rule.has_key?('icmp')
+          Icmp({
+            'Type' => 3, # Destination Unreachable
+            'Code' => 4  # Fragmentation Needed
+          })
         end
       }
     end
@@ -435,17 +441,52 @@ CloudFormation do
       NetworkInterfaceId Ref("NetworkInterface#{az}")
     }
 
-    nat_userdata = <<~USERDATA
-      #!/bin/bash
-      INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
-      aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
-      /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
-      systemctl disable postfix
-      systemctl stop postfix
-      systemctl enable snat
-      systemctl start snat
-    USERDATA
-
+    if external_parameters[:nat_2023]
+      nat_userdata = <<~USERDATA 
+        #!/bin/bash
+        # Fetch the metadata token for IMDSv2
+        TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+        INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+        aws ec2 modify-network-interface-attribute --network-interface-id ${NetworkInterface#{az}} --no-source-dest-check --region ${AWS::Region}
+        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
+        dnf -y install iptables iptables-utils iptables-services amazon-ssm-agent cronie
+        systemctl enable amazon-ssm-agent
+        systemctl start amazon-ssm-agent 
+        sysctl -w net.ipv4.ip_forward=1
+        sysctl -w net.ipv4.conf.ens5.rp_filter=0
+        echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
+        echo net.ipv4.conf.ens5.rp_filter = 0 >> /etc/sysctl.conf
+        iptables -t nat -A POSTROUTING -s ${CIDR} -o ens5 -j MASQUERADE
+        iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+        iptables-save > /etc/sysconfig/iptables
+        echo "@reboot root aws ec2 modify-network-interface-attribute --network-interface-id ${NetworkInterface#{az}} --no-source-dest-check --region ${AWS::Region}" >> /etc/crontab
+        systemctl enable crond --now
+        systemctl enable iptables --now
+          
+      USERDATA
+    else  
+      nat_userdata = <<~USERDATA
+        #!/bin/bash
+        INSTANCE_ID=$(curl http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+        aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
+        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
+        systemctl disable postfix
+        systemctl stop postfix
+        systemctl enable snat
+        systemctl start snat
+      USERDATA
+    end
+    network_interfaces = {
+        DeviceIndex: 0,
+        AssociatePublicIpAddress: true,
+        Groups: [ Ref(:NatInstanceSecurityGroup) ]
+      }
+    if external_parameters[:nat_2023]
+      network_interfaces = {
+          NetworkInterfaceId: Ref("NetworkInterface#{az}"),
+          DeviceIndex: 0
+        }
+    end  
     template_data = {
       TagSpecifications: [
         { ResourceType: 'instance', Tags: nat_tags },
@@ -455,11 +496,7 @@ CloudFormation do
       InstanceType: Ref(:NatInstanceType),
       UserData: FnBase64(FnSub(nat_userdata)),
       IamInstanceProfile: { Name: Ref(:NatInstanceProfile) },
-      NetworkInterfaces: [{
-        DeviceIndex: 0,
-        AssociatePublicIpAddress: true,
-        Groups: [ Ref(:NatInstanceSecurityGroup) ]
-      }]
+      NetworkInterfaces: [network_interfaces]
     }
     
     spot_options = {
@@ -546,7 +583,8 @@ CloudFormation do
       DesiredCapacity '1'
       MinSize '1'
       MaxSize '1'
-      VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
+      AvailabilityZones [FnSelect(az, FnGetAZs(Ref('AWS::Region')))] if external_parameters[:nat_2023]
+      VPCZoneIdentifier [Ref("SubnetPublic#{az}")] unless external_parameters[:nat_2023]
       LaunchTemplate({
         LaunchTemplateId: Ref("LaunchTemplate#{az}"),
         Version: FnGetAtt("LaunchTemplate#{az}", :LatestVersionNumber)
