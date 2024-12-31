@@ -448,7 +448,7 @@ CloudFormation do
         systemctl enable snat
         systemctl start snat
       USERDATA
-
+    end
     template_data = {
       TagSpecifications: [
         { ResourceType: 'instance', Tags: nat_tags },
