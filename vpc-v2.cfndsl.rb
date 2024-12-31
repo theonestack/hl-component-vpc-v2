@@ -444,9 +444,11 @@ CloudFormation do
         aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --no-source-dest-check --region ${AWS::Region}
         aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
         /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
-        dnf -y install iptables iptables-utils
+        dnf -y install iptables iptables-utils amazon-ssm-agent
         systemctl enable iptables
+        systemctl enable amazon-ssm-agent
         systemctl start iptables
+        systemctl start amazon-ssm-agent 
         iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save
