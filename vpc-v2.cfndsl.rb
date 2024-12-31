@@ -435,8 +435,22 @@ CloudFormation do
       NetworkInterfaceId Ref("NetworkInterface#{az}")
     }
 
-    if external_parameters[:nat_userdata]
-      nat_userdata = external_parameters[:nat_userdata]
+    if external_parameters[:nat_2023]
+      nat_userdata = <<~USERDATA 
+        #!/bin/bash
+        # Fetch the metadata token for IMDSv2
+        TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+        INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+        aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --no-source-dest-check --region ${AWS::Region}
+        aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
+        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
+        dnf -y install iptables iptables-utils
+        systemctl enable iptables
+        systemctl start iptables
+        iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE
+        iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
+        iptables-save
+      USERDATA
     else  
       nat_userdata = <<~USERDATA
         #!/bin/bash
