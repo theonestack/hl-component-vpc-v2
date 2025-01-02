@@ -513,7 +513,7 @@ CloudFormation do
       UserData: FnBase64(FnSub(nat_userdata)),
       IamInstanceProfile: { Name: Ref(:NatInstanceProfile) },
       NetworkInterfaces: [{
-        NetworkInterfaceId: ${NetworkInterface#{az}}
+        NetworkInterfaceId: Ref("NetworkInterface#{az}")
       #  DeviceIndex: 0,
       #  AssociatePublicIpAddress: true,
       #  Groups: [ Ref(:NatInstanceSecurityGroup) ]
