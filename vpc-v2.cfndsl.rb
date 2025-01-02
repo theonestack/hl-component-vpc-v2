@@ -447,8 +447,38 @@ CloudFormation do
         # Fetch the metadata token for IMDSv2
         TOKEN=$(curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
         INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
+        MAX_RETRIES=15
+        RETRY_DELAY=10
+        echo "Waiting for network interface ${NetworkInterface#{az}} to be available for attachment..."
+
+        # Retry loop to attach the ENI
+        for ((i=1; i<=MAX_RETRIES; i++)); do
+            ENI_STATUS=$(aws ec2 describe-network-interfaces --network-interface-ids ${NetworkInterface#{az}} \
+                --query "NetworkInterfaces[0].Status" --output text)
+
+            if [[ "$ENI_STATUS" == "available" ]]; then
+                echo "Network interface ${NetworkInterface#{az}} is available. Proceeding with attachment."
+                aws ec2 attach-network-interface --network-interface-id ${NetworkInterface#{az}} \
+                    --instance-id $INSTANCE_ID \
+                    --device-index 1
+                if [ $? -eq 0 ]; then
+                    echo "Successfully attached network interface ${NetworkInterface#{az}}."
+                    break
+                else
+                    echo "Failed to attach network interface ${NetworkInterface#{az}}. Retrying..."
+                fi
+            else
+                echo "Network interface $ENI_ID is not available (status: $ENI_STATUS). Retrying in $RETRY_DELAY seconds..."
+            fi
+
+            sleep $RETRY_DELAY
+        done
+
+        if [[ $i -gt MAX_RETRIES ]]; then
+            echo "Failed to attach network interface ${NetworkInterface#{az}} after $MAX_RETRIES attempts. Exiting."
+            exit 1
+        fi
         aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --no-source-dest-check --region ${AWS::Region}
-        aws ec2 attach-network-interface --instance-id $INSTANCE_ID --network-interface-id ${NetworkInterface#{az}} --device-index 1 --region ${AWS::Region}
         /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
         dnf -y install iptables iptables-utils amazon-ssm-agent
         systemctl enable iptables
@@ -456,7 +486,7 @@ CloudFormation do
         systemctl start iptables
         systemctl start amazon-ssm-agent 
         sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -o ens6 -j MASQUERADE
+        iptables -t nat -A POSTROUTING -s ${net}/${vpc_mask} -o ens6 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save
       USERDATA
