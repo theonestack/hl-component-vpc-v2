@@ -180,7 +180,7 @@ CloudFormation do
         RuleAction rule['action'] || 'allow'
         Egress rule['egress'] || false
         CidrBlock cidr
-        unless rule.has_key?('protocol') && rule['protocol'].to_s == '-1'
+        unless rule.has_key?('protocol') && ((rule['protocol'].to_s == '-1' || rule['protocol'].to_s == '1')
           PortRange ({ From: rule['from'], To: rule['to'] || rule['from'] })
         end
         if rule.has_key?('icmp')
@@ -486,7 +486,7 @@ CloudFormation do
         systemctl start iptables
         systemctl start amazon-ssm-agent 
         sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -s ${net}/${vpc_mask} -o ens6 -j MASQUERADE
+        iptables -t nat -A POSTROUTING -s #{net.to_s}/#{vpc_mask} -o ens6 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save
       USERDATA
