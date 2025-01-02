@@ -604,7 +604,7 @@ CloudFormation do
       DesiredCapacity '1'
       MinSize '1'
       MaxSize '1'
-      VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
+      #VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
       LaunchTemplate({
         LaunchTemplateId: Ref("LaunchTemplate#{az}"),
         Version: FnGetAtt("LaunchTemplate#{az}", :LatestVersionNumber)
