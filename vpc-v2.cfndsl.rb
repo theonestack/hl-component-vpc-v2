@@ -449,6 +449,7 @@ CloudFormation do
         INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
         MAX_RETRIES=15
         RETRY_DELAY=10
+        VPC_CIDR=#{Ref('CIDR')}
         echo "Waiting for network interface ${NetworkInterface#{az}} to be available for attachment..."
 
         # Retry loop to attach the ENI
@@ -486,7 +487,7 @@ CloudFormation do
         systemctl start iptables
         systemctl start amazon-ssm-agent 
         sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -s #{net.to_s}/#{vpc_mask} -o ens6 -j MASQUERADE
+        iptables -t nat -A POSTROUTING -s $VPC_CIDR -o ens6 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save
       USERDATA
