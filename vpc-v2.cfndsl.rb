@@ -604,9 +604,8 @@ CloudFormation do
       DesiredCapacity '1'
       MinSize '1'
       MaxSize '1'
-      AvailabilityZones
-        - get_az 
-      #VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
+      AvailabilityZones [FnSelect(az, FnGetAZs(Ref('AWS::Region')))] if external_parameters[:nat_2023]
+      VPCZoneIdentifier [Ref("SubnetPublic#{az}")] unless external_parameters[:nat_2023]
       LaunchTemplate({
         LaunchTemplateId: Ref("LaunchTemplate#{az}"),
         Version: FnGetAtt("LaunchTemplate#{az}", :LatestVersionNumber)
