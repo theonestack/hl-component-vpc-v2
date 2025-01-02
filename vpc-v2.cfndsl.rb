@@ -452,43 +452,44 @@ CloudFormation do
         echo "Waiting for network interface ${NetworkInterface#{az}} to be available for attachment..."
 
         # Retry loop to attach the ENI
-        for ((i=1; i<=MAX_RETRIES; i++)); do
-            ENI_STATUS=$(aws ec2 describe-network-interfaces --network-interface-ids ${NetworkInterface#{az}} \
-                --query "NetworkInterfaces[0].Status" --output text)
+        #for ((i=1; i<=MAX_RETRIES; i++)); do
+        #    ENI_STATUS=$(aws ec2 describe-network-interfaces --network-interface-ids ${NetworkInterface#{az}} \
+        #        --query "NetworkInterfaces[0].Status" --output text)
 
-            if [[ "$ENI_STATUS" == "available" ]]; then
-                echo "Network interface ${NetworkInterface#{az}} is available. Proceeding with attachment."
-                aws ec2 attach-network-interface --network-interface-id ${NetworkInterface#{az}} \
-                    --instance-id $INSTANCE_ID \
-                    --device-index 1
-                if [ $? -eq 0 ]; then
-                    echo "Successfully attached network interface ${NetworkInterface#{az}}."
-                    break
-                else
-                    echo "Failed to attach network interface ${NetworkInterface#{az}}. Retrying..."
-                fi
-            else
-                echo "Network interface $ENI_ID is not available (status: $ENI_STATUS). Retrying in $RETRY_DELAY seconds..."
-            fi
+        #    if [[ "$ENI_STATUS" == "available" ]]; then
+        #        echo "Network interface ${NetworkInterface#{az}} is available. Proceeding with attachment."
+        #        aws ec2 attach-network-interface --network-interface-id ${NetworkInterface#{az}} \
+        #            --instance-id $INSTANCE_ID \
+        #            --device-index 1
+        #        if [ $? -eq 0 ]; then
+        #            echo "Successfully attached network interface ${NetworkInterface#{az}}."
+        #            break
+        #        else
+        #            echo "Failed to attach network interface ${NetworkInterface#{az}}. Retrying..."
+        #        fi
+        #    else
+        #        echo "Network interface $ENI_ID is not available (status: $ENI_STATUS). Retrying in $RETRY_DELAY seconds..."
+        #    fi
 
-            sleep $RETRY_DELAY
-        done
+        #    sleep $RETRY_DELAY
+        #done
 
-        if [[ $i -gt MAX_RETRIES ]]; then
-            echo "Failed to attach network interface ${NetworkInterface#{az}} after $MAX_RETRIES attempts. Exiting."
-            exit 1
-        fi
-        aws ec2 modify-instance-attribute --instance-id $INSTANCE_ID --no-source-dest-check --region ${AWS::Region}
+        #if [[ $i -gt MAX_RETRIES ]]; then
+        #    echo "Failed to attach network interface ${NetworkInterface#{az}} after $MAX_RETRIES attempts. Exiting."
+        #    exit 1
+        #fi
+        aws ec2 modify-network-interface-attribute --network-interface-id ${NetworkInterface#{az}} --no-source-dest-check --region ${AWS::Region}
         /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
-        dnf -y install iptables iptables-utils amazon-ssm-agent
-        systemctl enable iptables
+        dnf -y install iptables iptables-utils iptables-services amazon-ssm-agent
         systemctl enable amazon-ssm-agent
+        systemctl enable iptables
         systemctl start iptables
         systemctl start amazon-ssm-agent 
         sysctl -w net.ipv4.ip_forward=1
-        iptables -t nat -A POSTROUTING -s ${CIDR} -o ens6 -j MASQUERADE
+        iptables -t nat -A POSTROUTING -s ${CIDR} -o ens5 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
-        iptables-save
+        iptables-save > /etc/sysconfig/iptables
+        #ip link set ens5 down
       USERDATA
     else  
       nat_userdata = <<~USERDATA
@@ -512,9 +513,10 @@ CloudFormation do
       UserData: FnBase64(FnSub(nat_userdata)),
       IamInstanceProfile: { Name: Ref(:NatInstanceProfile) },
       NetworkInterfaces: [{
-        DeviceIndex: 0,
-        AssociatePublicIpAddress: true,
-        Groups: [ Ref(:NatInstanceSecurityGroup) ]
+        NetworkInterfaceId: ${NetworkInterface#{az}}
+      #  DeviceIndex: 0,
+      #  AssociatePublicIpAddress: true,
+      #  Groups: [ Ref(:NatInstanceSecurityGroup) ]
       }]
     }
     
