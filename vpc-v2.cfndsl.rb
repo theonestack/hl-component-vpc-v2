@@ -180,7 +180,7 @@ CloudFormation do
         RuleAction rule['action'] || 'allow'
         Egress rule['egress'] || false
         CidrBlock cidr
-        unless rule.has_key?('protocol') && ((rule['protocol'].to_s == '-1' || rule['protocol'].to_s == '1')
+        unless rule.has_key?('protocol') && ((rule['protocol'].to_s == '-1' || rule['protocol'].to_s == '1'))
           PortRange ({ From: rule['from'], To: rule['to'] || rule['from'] })
         end
         if rule.has_key?('icmp')
