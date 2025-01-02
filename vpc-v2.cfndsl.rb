@@ -183,6 +183,12 @@ CloudFormation do
         unless rule.has_key?('protocol') && rule['protocol'].to_s == '-1'
           PortRange ({ From: rule['from'], To: rule['to'] || rule['from'] })
         end
+        if rule.has_key?('icmp')
+          Icmp({
+            'Type' => 3, # Destination Unreachable
+            'Code' => 4  # Fragmentation Needed
+          })
+        end
       }
     end
   end
@@ -449,7 +455,8 @@ CloudFormation do
         systemctl enable amazon-ssm-agent
         systemctl start iptables
         systemctl start amazon-ssm-agent 
-        iptables -t nat -A POSTROUTING -o ens5 -j MASQUERADE
+        sysctl -w net.ipv4.ip_forward=1
+        iptables -t nat -A POSTROUTING -o ens6 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save
       USERDATA
