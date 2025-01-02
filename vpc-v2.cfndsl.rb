@@ -605,7 +605,7 @@ CloudFormation do
       MinSize '1'
       MaxSize '1'
       AvailabilityZones
-        - "${AZ}" 
+        - get_az 
       #VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
       LaunchTemplate({
         LaunchTemplateId: Ref("LaunchTemplate#{az}"),
