@@ -604,6 +604,8 @@ CloudFormation do
       DesiredCapacity '1'
       MinSize '1'
       MaxSize '1'
+      AvailabilityZones
+        - #{az}
       #VPCZoneIdentifier [Ref("SubnetPublic#{az}")]
       LaunchTemplate({
         LaunchTemplateId: Ref("LaunchTemplate#{az}"),
