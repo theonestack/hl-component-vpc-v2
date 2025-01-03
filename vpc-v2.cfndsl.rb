@@ -476,6 +476,17 @@ CloudFormation do
         systemctl start snat
       USERDATA
     end
+    network_interfaces = {
+      DeviceIndex: 0,
+      AssociatePublicIpAddress: true,
+      Groups: [ Ref(:NatInstanceSecurityGroup) ]
+    }
+    if external_parameters[:nat_2023]
+      network_interfaces = {
+        NetworkInterfaceId: Ref("NetworkInterface#{az}"),
+        DeviceIndex: 0
+      }
+    end
     template_data = {
       TagSpecifications: [
         { ResourceType: 'instance', Tags: nat_tags },
@@ -485,12 +496,7 @@ CloudFormation do
       InstanceType: Ref(:NatInstanceType),
       UserData: FnBase64(FnSub(nat_userdata)),
       IamInstanceProfile: { Name: Ref(:NatInstanceProfile) },
-      NetworkInterfaces: [{
-        NetworkInterfaceId: Ref("NetworkInterface#{az}"),
-        DeviceIndex: 0
-      #  AssociatePublicIpAddress: true,
-      #  Groups: [ Ref(:NatInstanceSecurityGroup) ]
-      }]
+      NetworkInterfaces: [network_interfaces]
     }
     
     spot_options = {
