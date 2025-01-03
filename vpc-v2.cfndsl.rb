@@ -449,14 +449,20 @@ CloudFormation do
         INSTANCE_ID=$(curl -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/2014-11-05/meta-data/instance-id -s)
         aws ec2 modify-network-interface-attribute --network-interface-id ${NetworkInterface#{az}} --no-source-dest-check --region ${AWS::Region}
         /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource LaunchTemplate#{az} --region ${AWS::Region}
-        dnf -y install iptables iptables-utils iptables-services amazon-ssm-agent
+        dnf -y install iptables iptables-utils iptables-services amazon-ssm-agent cronie
         systemctl enable amazon-ssm-agent
         systemctl start amazon-ssm-agent 
         sysctl -w net.ipv4.ip_forward=1
+        sysctl -w net.ipv4.conf.ens5.rp_filter=0
+        echo net.ipv4.ip_forward = 1 >> /etc/sysctl.conf
+        echo net.ipv4.conf.ens5.rp_filter = 0 >> /etc/sysctl.conf
         iptables -t nat -A POSTROUTING -s ${CIDR} -o ens5 -j MASQUERADE
         iptables -t mangle -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --clamp-mss-to-pmtu
         iptables-save > /etc/sysconfig/iptables
+        echo "@reboot root aws ec2 modify-network-interface-attribute --network-interface-id ${NetworkInterface#{az}} --no-source-dest-check --region ${AWS::Region}" >> /etc/crontab
+        systemctl enable crond --now
         systemctl enable iptables --now
+          
       USERDATA
     else  
       nat_userdata = <<~USERDATA
