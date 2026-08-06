@@ -15,7 +15,7 @@ describe 'compiled component' do
     let(:properties) { template["Resources"]["FlowLogsLogGroup"]["Properties"] }
 
     it 'has property RetentionInDays' do
-      expect(properties["RetentionInDays"]).to eq("14")
+      expect(properties["RetentionInDays"]).to eq({"Fn::Sub" => "14"})
     end
 
   end

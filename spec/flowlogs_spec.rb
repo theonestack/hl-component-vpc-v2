@@ -19,7 +19,7 @@ describe 'compiled component' do
     end
 
     it 'has property RetentionInDays' do
-      expect(properties["RetentionInDays"]).to eq("7")
+      expect(properties["RetentionInDays"]).to eq({"Fn::Sub" => "7"})
     end
 
   end

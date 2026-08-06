@@ -809,7 +809,7 @@ CloudFormation do
 
     Logs_LogGroup(:FlowLogsLogGroup) {
       LogGroupName FnSub("${EnvironmentName}-vpc-flowlogs")
-      RetentionInDays "#{log_retention}"
+      RetentionInDays FnSub("#{log_retention}")
     }
 
     IAM_Role(:PutVPCFlowLogsRole) {
