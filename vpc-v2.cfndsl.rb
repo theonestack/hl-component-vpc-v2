@@ -337,6 +337,7 @@ CloudFormation do
     )
         
     EC2_RouteTable("RouteTablePrivate#{az}") {
+      Condition "CreateAvailabilityZone#{az}"
       VpcId Ref(:VPC)
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-private-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
