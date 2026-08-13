@@ -1742,7 +1742,7 @@ describe 'compiled component vpc-v2' do
       end
       
       it "to have property RouteTableIds" do
-          expect(resource["Properties"]["RouteTableIds"]).to eq([{"Ref"=>"RouteTablePrivate0"}, {"Ref"=>"RouteTablePrivate1"}, {"Ref"=>"RouteTablePrivate2"}])
+          expect(resource["Properties"]["RouteTableIds"]).to eq([{"Ref"=>"RouteTablePrivate0"}, {"Fn::If"=>["CreateAvailabilityZone1", {"Ref"=>"RouteTablePrivate1"}, {"Ref"=>"AWS::NoValue"}]}, {"Fn::If"=>["CreateAvailabilityZone2", {"Ref"=>"RouteTablePrivate2"}, {"Ref"=>"AWS::NoValue"}]}])
       end
       
     end
@@ -1789,7 +1789,7 @@ describe 'compiled component vpc-v2' do
       end
       
       it "to have property RouteTableIds" do
-          expect(resource["Properties"]["RouteTableIds"]).to eq([{"Ref"=>"RouteTablePrivate0"}, {"Ref"=>"RouteTablePrivate1"}, {"Ref"=>"RouteTablePrivate2"}])
+          expect(resource["Properties"]["RouteTableIds"]).to eq([{"Ref"=>"RouteTablePrivate0"}, {"Fn::If"=>["CreateAvailabilityZone1", {"Ref"=>"RouteTablePrivate1"}, {"Ref"=>"AWS::NoValue"}]}, {"Fn::If"=>["CreateAvailabilityZone2", {"Ref"=>"RouteTablePrivate2"}, {"Ref"=>"AWS::NoValue"}]}])
       end
       
       it "to have property VpnGatewayId" do
