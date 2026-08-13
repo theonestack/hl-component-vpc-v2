@@ -55,8 +55,8 @@ describe 'compiled component' do
     it 'has property RouteTableIds' do
       expect(properties["RouteTableIds"]).to eq([
         {"Ref" => "RouteTablePrivate0"},
-        {"Ref" => "RouteTablePrivate1"},
-        {"Ref" => "RouteTablePrivate2"}
+        {"Fn::If" => ["CreateAvailabilityZone1", {"Ref" => "RouteTablePrivate1"}, {"Ref" => "AWS::NoValue"}]},
+        {"Fn::If" => ["CreateAvailabilityZone2", {"Ref" => "RouteTablePrivate2"}, {"Ref" => "AWS::NoValue"}]}
       ])
     end
     

@@ -337,12 +337,16 @@ CloudFormation do
     )
         
     EC2_RouteTable("RouteTablePrivate#{az}") {
-      Condition "CreateAvailabilityZone#{az}"
+      Condition "CreateAvailabilityZone#{az}" if az > 0
       VpcId Ref(:VPC)
       Tags [{Key: 'Name', Value: FnSub("${EnvironmentName}-private-${AZ}", get_az) }].push(*vpc_tags).uniq! { |t| t[:Key] }
     }
     
-    route_tables.push(Ref("RouteTablePrivate#{az}"))
+    if az == 0
+      route_tables.push(Ref("RouteTablePrivate#{az}"))
+    else
+      route_tables.push(FnIf("CreateAvailabilityZone#{az}", Ref("RouteTablePrivate#{az}"), Ref('AWS::NoValue')))
+    end
     
     EC2_EIP("NatIPAddress#{az}") {
       Condition "CreateNatGatewayEIP#{az}"
@@ -389,6 +393,7 @@ CloudFormation do
         end
         
         EC2_Route("CustomRoute#{az}#{index}") {
+          Condition "CreateAvailabilityZone#{az}" if az > 0
           RouteTableId Ref("RouteTablePrivate#{az}")
           DestinationCidrBlock key
           case routeType
