@@ -705,6 +705,11 @@ CloudFormation do
         Principal: "*",
         Action: ["s3:*"],
         Resource: ["arn:aws:s3:::*"]
+      }, {
+        Effect: "Allow",
+        Principal: "*",
+        Action: ["s3tables:*"],
+        Resource: ["arn:aws:s3tables:*"]
       }]
     })
     ServiceName FnSub("com.amazonaws.${AWS::Region}.s3")

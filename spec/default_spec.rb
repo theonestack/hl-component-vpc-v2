@@ -1734,7 +1734,7 @@ describe 'compiled component vpc-v2' do
       end
       
       it "to have property PolicyDocument" do
-          expect(resource["Properties"]["PolicyDocument"]).to eq({"Version"=>"2012-10-17", "Statement"=>[{"Effect"=>"Allow", "Principal"=>"*", "Action"=>["s3:*"], "Resource"=>["arn:aws:s3:::*"]}]})
+          expect(resource["Properties"]["PolicyDocument"]).to eq({"Version"=>"2012-10-17", "Statement"=>[{"Effect"=>"Allow", "Principal"=>"*", "Action"=>["s3:*"], "Resource"=>["arn:aws:s3:::*"]}, {"Effect"=>"Allow", "Principal"=>"*", "Action"=>["s3tables:*"], "Resource"=>["arn:aws:s3tables:*"]}]})
       end
       
       it "to have property ServiceName" do
